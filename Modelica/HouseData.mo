@@ -1,8 +1,8 @@
 class HouseData
   Real consumption(unit = "kW");
   Real production(unit = "kW");
-  Real PHEV_initial_charge_state(unit = "kW");
-  Real PHEV_charge_rate(unit = "kWh");
+  Real PHEV_initial_charge_state(unit = "kWh");
+  Real PHEV_charge_rate(unit = "kW");
   Real PHEV_next_hours_connected(unit = "h");
   Boolean PHEV_present;
   Boolean PHEV_arrived;
