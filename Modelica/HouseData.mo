@@ -11,7 +11,7 @@ protected
   /* an alternative for the smoothness is Modelica.Blocks.Types.Smoothness.ConstantSegments */
   /* the LUT is not continuous, so ContinuousDerivative is not applicable */
   Modelica.Blocks.Sources.CombiTimeTable LUT(tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.LinearSegments, columns = {2, 3, 4, 5, 6}, tableName = "table", fileName = LUT_path);
-  parameter String LUT_path = "/home/michele/Developer/Modelica/Progetto/LUT_profiles.txt";
+  parameter String LUT_path = "../LUT_profiles.txt";
   Boolean PHEV_present_last(start = false);
 algorithm
   PHEV_present := not LUT.y[3] == 0;
