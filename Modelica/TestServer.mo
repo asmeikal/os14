@@ -1,4 +1,10 @@
 model TestServer
+  Real energyConsumption(unit = "kW");
+  Integer control(start = 0);
+  Integer receivedControl;
+  Battery mainBattery(capacity = 4, minChargeRate = -2, maxChargeRate = 2, startingCharge = 2, chargeDissipation = 0.98, dischargeDissipation = 0.82) annotation(Placement(visible = true, transformation(origin = {48, 50}, extent = {{-20, -20}, {20, 20}}, rotation = 0)));
+  HouseData HouseSim annotation(Placement(visible = true, transformation(origin = {-29, 29}, extent = {{-53, -53}, {53, 53}}, rotation = 0)));
+
   class Battery
     parameter Real maxChargeRate(unit = "kW");
     parameter Real minChargeRate(unit = "kW");
@@ -14,6 +20,7 @@ model TestServer
     chargeRate_toGrid = if chargeRate >= 0 then chargeRate else chargeRate * dischargeDissipation;
     chargeRate_toLoad = if chargeRate >= 0 then chargeDissipation * chargeRate else chargeRate;
     der(charge) = chargeRate_toLoad / 60;
+    annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2}), graphics = {Rectangle(origin = {-4, 69}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-14, 13}, {14, -13}}), Rectangle(origin = {-2, -11}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-48, -81}, {48, 81}})}), Diagram(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2})));
   end Battery;
 
   class HouseData
@@ -35,6 +42,7 @@ model TestServer
     connect(PHEV_charge, LUT.y[3]);
     connect(PHEV_chargeRate, LUT.y[4]);
     connect(PHEV_next_hours, LUT.y[5]);
+    annotation(Icon(coordinateSystem(extent = {{-100, -100}, {100, 100}}, preserveAspectRatio = true, initialScale = 0.1, grid = {2, 2}), graphics = {Rectangle(origin = {-1, -22}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, extent = {{-67, 58}, {67, -58}}), Polygon(origin = {-1.98, 56.92}, fillColor = {255, 255, 255}, fillPattern = FillPattern.Solid, points = {{-76.0202, -24.924}, {3.9798, 25.076}, {75.9798, -24.924}, {-76.0202, -24.924}})}));
   end HouseData;
 
   function getOM
@@ -69,12 +77,6 @@ model TestServer
 
     external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end startServers;
-
-  HouseData HouseSim;
-  Real energyConsumption(unit = "kW");
-  Battery mainBattery(capacity = 4, minChargeRate = -2, maxChargeRate = 2, startingCharge = 2, chargeDissipation = 0.98, dischargeDissipation = 0.82);
-  Integer control(start = 0);
-  Integer receivedControl;
 initial algorithm
   startServers();
   control := control + 1;
