@@ -11,6 +11,7 @@ if (( $# != 1 ))
 fi
 
 base_name="${1%.*}"
+modelica="./Modelica"
 file_name="LUT_${base_name}.txt"
 tmp_name='tmp_${file_name}'
 
@@ -18,9 +19,14 @@ gawk -f 'LUT_converter.awk' $1 > $tmp_name
 
 rows=`wc -l < $tmp_name`
 
-echo "#1" > $file_name
-echo "double table($rows,6)" >> $file_name
-cat $tmp_name >> $file_name
+if [[ -d modelica ]]
+    then
+    mkdir -p modelica
+fi
+
+echo "#1" > "${modelica}/${file_name}"
+echo "double table($rows,6)" >> "${modelica}/${file_name}"
+cat $tmp_name >> "${modelica}/${file_name}"
 
 rm $tmp_name
 
