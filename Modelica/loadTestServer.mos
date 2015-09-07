@@ -1,0 +1,2 @@
+loadModel(Modelica);
+loadFile("TestServer.mo");

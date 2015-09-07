@@ -1,6 +1,4 @@
 model TestServer
-  parameter String include_path = "#include \"/home/michele/Developer/Modelica/Progetto/SocketLibrary/include/libSocketsModelica.h\"";
-
   class Battery
     parameter Real maxChargeRate(unit = "kW");
     parameter Real minChargeRate(unit = "kW");
@@ -19,7 +17,7 @@ model TestServer
   end Battery;
 
   class HouseData
-    import Modelica.Blocks.Sources.CombiTimeTable;
+    import Modelica;
     Real consumption(unit = "kW");
     Real production(unit = "kW");
     Real PHEV_charge(unit = "kWh");
@@ -30,7 +28,7 @@ model TestServer
     /* an alternative for the smoothness is Modelica.Blocks.Types.Smoothness.ConstantSegments */
     /* the LUT is not continuous, so ContinuousDerivative is not applicable */
     Modelica.Blocks.Sources.CombiTimeTable LUT(tableOnFile = true, smoothness = Modelica.Blocks.Types.Smoothness.LinearSegments, columns = {2, 3, 4, 5, 6}, tableName = "table", fileName = LUT_path);
-    parameter String LUT_path = "/home/michele/Developer/Modelica/Progetto/LUT_profiles.txt";
+    parameter String LUT_path = "LUT_profiles.txt";
   equation
     connect(consumption, LUT.y[1]);
     connect(production, LUT.y[2]);
@@ -44,32 +42,32 @@ model TestServer
     input String n;
     output Real y;
   
-    external y = getOM(n) annotation(Library = "/home/michele/Developer/Modelica/Progetto/SocketLibrary/lib/libSocketsModelica.a", LibraryDirectory = library_path, Include = include_path);
+    external y = getOM(n) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end getOM;
 
   function getOMcontrol
     input Real t;
     output Integer y;
   
-    external y = getOMcontrol() annotation(Library = "/home/michele/Developer/Modelica/Progetto/SocketLibrary/lib/libSocketsModelica.a", LibraryDirectory = library_path, Include = include_path);
+    external y = getOMcontrol() annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end getOMcontrol;
 
   function sendOM
     input Real x;
     input String n;
   
-    external "C"  annotation(Library = "/home/michele/Developer/Modelica/Progetto/SocketLibrary/lib/libSocketsModelica.a", LibraryDirectory = library_path, Include = include_path);
+    external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end sendOM;
 
   function sendOMcontrol
     input Integer x;
   
-    external "C"  annotation(Library = "/home/michele/Developer/Modelica/Progetto/SocketLibrary/lib/libSocketsModelica.a", LibraryDirectory = library_path, Include = include_path);
+    external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end sendOMcontrol;
 
   function startServers
 
-    external "C"  annotation(Library = "/home/michele/Developer/Modelica/Progetto/SocketLibrary/lib/libSocketsModelica.a", LibraryDirectory = library_path, Include = include_path);
+    external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end startServers;
 
   HouseData HouseSim;
