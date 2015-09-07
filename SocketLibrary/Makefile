@@ -86,6 +86,7 @@ tests: $(TEST_BINS)
 tests: all
 
 clean: 
+	rm -rf $(MODELICA)/*.a $(MODELICA)/*.h
 	rm -rf $(LIB_DIR)
 	rm -rf $(BIN_DIR)
 	rm -rf $(OBJ_DIR)
