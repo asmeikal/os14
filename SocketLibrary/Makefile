@@ -3,6 +3,7 @@ LIB_NAME = SocketsModelica
 
 # directories
 BASE_DIR = .
+MODELICA = ../Modelica
 
 SRC_DIR = $(BASE_DIR)/src
 OBJ_DIR = $(BASE_DIR)/obj
@@ -21,6 +22,7 @@ OBJ_LIBS = $(OBJ_DIR)/libSocketsModelica.o \
 # library
 LIB_DIR = $(BASE_DIR)/lib
 LIB = $(LIB_DIR)/lib$(LIB_NAME).a
+LIB_HDR = $(HDR_DIR)/lib$(LIB_NAME).h
 
 # tests
 
@@ -50,22 +52,24 @@ CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused $(INCLUDE)
 
 # object files
 $(OBJ_LIBS): $(HEADERS)
-	mkdir -p $(OBJ_DIR)
+	test -d $(OBJ_DIR) || mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) $(SRC_DIR)/$(@F:.o=.c) -c -o $@ 
 
 $(TEST_OBJS): $(HEADERS)
-	mkdir -p $(TEST_DIR_OBJ)
+	test -d $(TEST_OBJ_DIR) || mkdir -p $(TEST_OBJ_DIR)
 	$(CC) $(CFLAGS) $(TEST_DIR_SRC)/$(@F:.o=.c) -c -o $@
 
 # library
 $(LIB): $(OBJ_LIBS)
-	mkdir -p $(LIB_DIR)
+	test -d $(LIB_DIR) || mkdir -p $(LIB_DIR)
 	ar r $@ $(OBJ_LIBS)
 	ranlib $@
+	cp $(LIB) $(MODELICA)
+	cp $(LIB_HDR) $(MODELICA)
 
 # binaries
 $(TEST_BINS): $(LIB) $(TEST_OBJS)
-	mkdir -p $(TEST_DIR_BIN)
+	test -d $(TEST_DIR_BIN) || mkdir -p $(TEST_DIR_BIN)
 	$(CC) $(CFLAGS) $(TEST_DIR_OBJ)/$(@F).o -L$(LIB_DIR) -l$(LIB_NAME) -o $@
 
 
