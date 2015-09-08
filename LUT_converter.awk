@@ -3,7 +3,7 @@ BEGIN {
     time = 0;
     FS = ",";
     missing_phev = 0;
-    missing_phev_last = 0;
+    missing_phev_last = 1;
     phev_charge_last = 0;
     phev_chargeRate_last = 0;
 }
@@ -19,7 +19,6 @@ BEGIN {
         gsub(/[-:]/," ",$2);
         d2=mktime($2);
         d1=mktime($1);
-        time += (d2-d1)/60;
         if (missing_phev) {
             phev_charge = 0;
             phev_chargeRate = 0;
@@ -40,5 +39,6 @@ BEGIN {
         missing_phev_last = missing_phev;
         phev_charge_last = phev_charge;
         phev_chargeRate_last = phev_chargeRate;
+        time += (d2-d1)/60;
     }
 }
