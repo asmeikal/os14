@@ -28,31 +28,31 @@ int main(void)
 {
     long int control = 1;
     int i;
+    double t = 0.0;
 
     long int recv_ctrl;
-    double recv_battery, recv_phev;
+    double recv_battery;
 
-    startServers();
+    startServers(t);
 
     for(i = 0; i < 19; ++i) {
-        sendOMcontrol(control);
+        sendOMcontrol(control, t);
 
         ++control;
 
-        sendOM(values[i][0], "energy");
-        sendOM(values[i][1], "production");
-        sendOM(values[i][2], "consumption");
-        sendOM(values[i][3], "battery");
+        sendOM(values[i][0], "energy", t);
+        sendOM(values[i][1], "production", t);
+        sendOM(values[i][2], "consumption", t);
+        sendOM(values[i][3], "battery", t);
 
         fprintf(stderr, "Sent 4 values.\n");
 
-        recv_ctrl = getOMcontrol();
+        recv_ctrl = getOMcontrol(t);
 
         fprintf(stderr, "Received control %ld.\n", recv_ctrl);
 
-        recv_battery = getOM("battery"); 
-        recv_phev = getOM("phev");
+        recv_battery = getOM("battery", t); 
 
-        fprintf(stderr, "Received battery & phev: %f %f.\n", recv_battery, recv_phev);
+        fprintf(stderr, "Received battery: %f.\n", recv_battery);
     }
 }

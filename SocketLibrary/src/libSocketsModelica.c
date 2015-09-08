@@ -23,7 +23,7 @@ struct buffer_val_double {
 };
 
 struct buffer_val_int {
-    int value;
+    long int value;
     unsigned char isset;
 };
 
@@ -34,6 +34,9 @@ struct buffer_val_int {
 static void send_all(void);
 static void get_all(void);
 
+static void read_complete(int fd, char *buf, size_t count);
+static void send_complete(int fd, char *buf, size_t count);
+
 static void print_buffer(struct buffer_val_double b[]);
 static void clean_MEAS_buffer(void);
 static unsigned char isempty_CMDS_buffer(void);
@@ -43,10 +46,10 @@ static unsigned char isfull_MEAS_buffer(void);
 * Local variables
 ************************************************************/
 
-struct buffer_val_int control_buffer[SOCKET_NUMBER];
+struct buffer_val_int control_buffer[SOCKET_NUMBER] = {{0}};
 
-struct buffer_val_double meas_buffer[MEAS_NUMBER];
-struct buffer_val_double cmds_buffer[CMDS_NUMBER];
+struct buffer_val_double meas_buffer[MEAS_NUMBER] = {{0}};
+struct buffer_val_double cmds_buffer[CMDS_NUMBER] = {{0}};
 
 struct socket_singleton sockets[SOCKET_NUMBER] = {{0}};
 
@@ -57,11 +60,11 @@ struct socket_singleton sockets[SOCKET_NUMBER] = {{0}};
 /**
  * Listens on MEAS and CMDS ports and accepts a connection on each one.
  */
-void startServers(void)
+double startServers(double t)
 {
     if((0 != sockets[SOCKET_CMDS].accept_fd) || (0 != sockets[SOCKET_MEAS].accept_fd)) {
         DEBUG_PRINT("startServers: connections already started\n");
-        return;
+        return t;
     }
 
     int fds_left = SOCKET_NUMBER;
@@ -90,8 +93,14 @@ void startServers(void)
 
     } while (0 < fds_left);
 
-    PRINT_MSG("startServers: all connection accepted\n");
+    PRINT_MSG("startServers: all connection accepted at time %f\n", t);
     // accept both connections
+
+    Measures i;
+    control_buffer[SOCKET_MEAS].isset = 1;
+    for(i = 0; i < MEAS_NUMBER; ++i) {
+        meas_buffer[i].isset = 1;
+    }
 
     clean_MEAS_buffer();
 
@@ -100,6 +109,8 @@ void startServers(void)
 #endif
 
     set_timer();
+
+    return t;
 }
 
 /**
@@ -107,30 +118,36 @@ void startServers(void)
  * is full.
  * Throws error if control message has already been buffered.
  */
-void sendOMcontrol(long int val)
+long int sendOMcontrol(long int val, double t)
 {
     if(0 != control_buffer[SOCKET_MEAS].isset) {
         ERROR("sendOMcontrol: control already set\n");
     }
 
-    control_buffer[SOCKET_MEAS].value = val;
+    // PRINT_MSG("sendOMcontrol: got command at time %.10f\n", t);
+
     control_buffer[SOCKET_MEAS].isset = 1;
+    control_buffer[SOCKET_MEAS].value = val;
 
     if(0 != isfull_MEAS_buffer()) {
         send_all();
     }
+
+    return val;
 }
 
 /**
  * Buffers the [val] in the [name] slot. Sends all values if the MEAS
- * buffer is full. Throws error if [name] variable has already been
+ * buffer is full. Throws econnectrror if [name] variable has already been
  * buffered.
  */
-void sendOM(double val, char *name)
+double sendOM(double val, char *name, double t)
 {
     if(NULL == name) {
         ERROR("sendOM: NULL pointer argument\n");
     }
+
+    // PRINT_MSG("sendOM: got command at time %.10f\n", t);
 
     Measures n = get_MEAS_num_from_name(name);
     if((-1 == n) || (n >= MEAS_NUMBER)) {
@@ -147,6 +164,8 @@ void sendOM(double val, char *name)
     if(0 != isfull_MEAS_buffer()) {
         send_all();
     }
+
+    return val;
 }
 
 /**
@@ -154,7 +173,7 @@ void sendOM(double val, char *name)
  * control message has already been taken, throws an error. If the 
  * CMDS buffer is empty, loads data from the socket.
  */
-long int getOMcontrol(void)
+long int getOMcontrol(double t)
 {
     if(0 != isempty_CMDS_buffer()) {
         get_all();
@@ -175,7 +194,7 @@ long int getOMcontrol(void)
  * [name] variable has already been taken, throws an error. If the 
  * CMDS buffer is empty, loads data from the socket.
  */
-double getOM(char *name)
+double getOM(char *name, double t)
 {
     if(NULL == name) {
         ERROR("getOM: NULL pointer argument\n");
@@ -211,25 +230,33 @@ double getOM(char *name)
  */
 static void send_all(void)
 {
+    static int count = 0;
+    ++count;
+    if(count != control_buffer[SOCKET_MEAS].value) {
+        ERROR("ERROR: send_all: called %d times, but control is %ld\n", count, control_buffer[SOCKET_MEAS].value);
+    }
+
+    // DEBUG_PRINT("send_all: sending\n");
+    // DEBUG_PRINT("control: %d\n", control_buffer[SOCKET_MEAS].value);
+    // print_buffer(meas_buffer);
+
     if((0 == sockets[SOCKET_CMDS].accept_fd) || (0 == sockets[SOCKET_MEAS].accept_fd)) {
         ERROR("send_all: sockets not started\n");
+    }
+
+    if(0 == isfull_MEAS_buffer()) {
+        ERROR("send_all: MEAS buffer not full\n");
     }
 
     int n;
     Measures i;
 
     /* Send control message */
-    n = send(sockets[SOCKET_MEAS].accept_fd, (char *)&control_buffer[SOCKET_MEAS].value, sizeof (long int), 0);
-    if(!(n == sizeof (long int))) {
-        ERROR("send_all: sent only %d bytes\n", n);
-    }
+    send_complete(sockets[SOCKET_MEAS].accept_fd, (char *)&(control_buffer[SOCKET_MEAS].value), sizeof (long int));
 
     /* Send all values in the MEAS buffer */
     for (i = 0; i < MEAS_NUMBER; i++) {
-        n = send(sockets[SOCKET_MEAS].accept_fd, (char *)&meas_buffer[i], sizeof(double), 0);
-        if(!(n == sizeof (double))) {
-            ERROR("send_all: sent only %d bytes\n", n);
-        }
+        send_complete(sockets[SOCKET_MEAS].accept_fd, (char *)&meas_buffer[i], sizeof(double));
     }
 
     /* Empty the MEAS buffer and control variable */
@@ -238,6 +265,43 @@ static void send_all(void)
 #ifndef USE_PHEV
     meas_buffer[MEAS_PHEV].isset = meas_buffer[MEAS_PHEV_READY_HOURS].isset = 1;
 #endif
+}
+
+static void read_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("read_complete: can't read %d bytes\n", count);
+    }
+
+    size_t n = 0, r;
+
+    while(n < count) {
+        wait_for_answer(fd);
+
+        r = recv(fd, buf+n, count - n, 0);
+        if(0 >= r) {
+            ERROR("read_complete: recv failed\n");
+        }
+        n += r;
+    }
+
+}
+
+static void send_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("send_complete: can't send %d bytes\n", count);
+    }
+
+    size_t n = 0, s;
+
+    while(n < count) {
+        s = send(fd, buf+n, count - n, 0);
+        if(0 >= s) {
+            ERROR("send_complete: send failed\n");
+        }
+        n += s;
+    }
 }
 
 /**
@@ -250,35 +314,26 @@ static void get_all(void)
         ERROR("get_all: sockets not started\n");
     }
 
+    if(0 == isempty_CMDS_buffer()) {
+        ERROR("get_all: CMDS buffer not empty\n");
+    }
+
     int n;
     Commands i;
 
-    /* Wait for data */
-    wait_for_answer(sockets[SOCKET_CMDS].accept_fd);
-
     /* Get control message */
-    n = recv(sockets[SOCKET_CMDS].accept_fd, (char *)&control_buffer[SOCKET_CMDS].value, sizeof(long int), 0);
-    if(!(n == sizeof (long int))) {
-        ERROR("get_all: read only %d bytes\n", n);
-    }
+    read_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&(control_buffer[SOCKET_CMDS].value), sizeof(long int));
     control_buffer[SOCKET_CMDS].isset = 1;
 
     /* Get all CMDS values */
     for (i = 0; i < CMDS_NUMBER; i++) {
-        wait_for_answer(sockets[SOCKET_CMDS].accept_fd);
-
-        n = recv(sockets[SOCKET_CMDS].accept_fd, (char *)&(cmds_buffer[i].value), sizeof(double), 0);
-        if(!(n == sizeof (double))) {
-            ERROR("get_all: read only %d bytes\n", n);
-        }
+        read_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&(cmds_buffer[i].value), sizeof(double));
         cmds_buffer[i].isset = 1;
     }
 
     /* Send control message through socket */
-    n = send(sockets[SOCKET_CMDS].accept_fd, (char *)&control_buffer[SOCKET_CMDS].value, sizeof (long int), 0);
-    if(!(n == sizeof (long int))) {
-        ERROR("send_control_ack: sent only %d bytes\n", n);
-    }
+    long int ctrl_back = 0;
+    send_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&ctrl_back, sizeof (long int));
 
 #ifndef USE_PHEV
     cmds_buffer[CMDS_PHEV].isset = 0;
@@ -331,6 +386,10 @@ static unsigned char isempty_CMDS_buffer(void)
  */
 static void clean_MEAS_buffer(void)
 {
+    if(0 == isfull_MEAS_buffer()) {
+        ERROR("clean_MEAS_buffer: buffer is not full\n");
+    }
+
     Measures i;
 
     control_buffer[SOCKET_MEAS].isset = 0;
