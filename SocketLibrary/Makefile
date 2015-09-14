@@ -50,7 +50,7 @@ CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused $(INCLUDE)
 # main directives #
 # # # # # # # # # #
 
-.PHONY: all clean
+.PHONY: clean all
 
 # object files
 $(OBJ_LIBS): $(HEADERS)
