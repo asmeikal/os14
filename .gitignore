@@ -1,0 +1,10 @@
+Mari - House EBR/
+Modelica/*
+!Modelica/*.mo
+!Modelica/*.mos
+*~
+\#*
+Previous versions/
+**/lib/
+**/bin/
+**/obj/

@@ -269,43 +269,6 @@ static void send_all(void)
 #endif
 }
 
-static void read_complete(int fd, char *buf, size_t count)
-{
-    if(0 >= count) {
-        ERROR("read_complete: can't read %d bytes\n", count);
-    }
-
-    size_t n = 0, r;
-
-    while(n < count) {
-        wait_for_answer(fd);
-
-        r = recv(fd, buf+n, count - n, 0);
-        if(0 >= r) {
-            ERROR("read_complete: recv failed\n");
-        }
-        n += r;
-    }
-
-}
-
-static void send_complete(int fd, char *buf, size_t count)
-{
-    if(0 >= count) {
-        ERROR("send_complete: can't send %d bytes\n", count);
-    }
-
-    size_t n = 0, s;
-
-    while(n < count) {
-        s = send(fd, buf+n, count - n, 0);
-        if(0 >= s) {
-            ERROR("send_complete: send failed\n");
-        }
-        n += s;
-    }
-}
-
 /**
  * Fills the CMDS buffer and the control variable with values
  * taken from the CMDS socket.
@@ -343,6 +306,47 @@ static void get_all(void)
 
     /* Restart controller timer */
     set_timer();
+}
+
+/************************************************************
+* Socket read and write functions
+************************************************************/
+
+static void read_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("read_complete: can't read %d bytes\n", count);
+    }
+
+    size_t n = 0, r;
+
+    while(n < count) {
+        wait_for_answer(fd);
+
+        r = recv(fd, buf+n, count - n, 0);
+        if(0 >= r) {
+            ERROR("read_complete: recv failed\n");
+        }
+        n += r;
+    }
+
+}
+
+static void send_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("send_complete: can't send %d bytes\n", count);
+    }
+
+    size_t n = 0, s;
+
+    while(n < count) {
+        s = send(fd, buf+n, count - n, 0);
+        if(0 >= s) {
+            ERROR("send_complete: send failed\n");
+        }
+        n += s;
+    }
 }
 
 /************************************************************
