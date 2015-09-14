@@ -11,6 +11,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 #include <poll.h>
 
 /************************************************************
@@ -72,11 +74,11 @@ double startServers(double t)
 
     /* Create sockets. */
     if(0 > (sockets[SOCKET_CMDS].listen_fd = socketBuilder(CMDS_LISTEN_PORT, 1))) {
-        ERROR("startServers: unable to create CMDS socket\n");
+        ERROR("startServers: unable to create CMDS socket: %s\n", strerror(errno));
     }
 
     if(0 > (sockets[SOCKET_MEAS].listen_fd = socketBuilder(MEAS_LISTEN_PORT, 1))) {
-        ERROR("startServers: unable to create MEAS socket\n");
+        ERROR("startServers: unable to create MEAS socket: %s\n", strerror(errno));
     }
 
     /* Wait until both (all) connections are accepted. */
