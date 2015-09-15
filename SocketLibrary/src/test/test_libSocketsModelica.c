@@ -30,8 +30,8 @@ int main(void)
     int i;
     double t = 0.0;
 
-    long int recv_ctrl;
-    double recv_battery;
+    long int recv_ctrl = 0;
+    double recv_battery = 0.0;
 
     startServers(t);
 
@@ -47,11 +47,11 @@ int main(void)
 
         fprintf(stderr, "Sent 4 values.\n");
 
-        recv_ctrl = getOMcontrol(t);
+        recv_ctrl = getOMcontrol(recv_ctrl, t);
 
         fprintf(stderr, "Received control %ld.\n", recv_ctrl);
 
-        recv_battery = getOM("battery", t); 
+        recv_battery = getOM(recv_battery, "battery", t); 
 
         fprintf(stderr, "Received battery: %f.\n", recv_battery);
     }
