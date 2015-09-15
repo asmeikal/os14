@@ -30,10 +30,8 @@ TEST_DIR_SRC = $(SRC_DIR)/test
 TEST_DIR_OBJ = $(OBJ_DIR)/test
 TEST_DIR_BIN = $(BIN_DIR)/test
 
-TEST_OBJS = $(TEST_DIR_OBJ)/test_libSocketsModelica.o \
-			$(TEST_DIR_OBJ)/test_connection.o
-TEST_BINS = $(TEST_DIR_BIN)/test_libSocketsModelica \
-			$(TEST_DIR_BIN)/test_connection
+TEST_OBJS = $(TEST_DIR_OBJ)/test_libSocketsModelica.o 
+TEST_BINS = $(TEST_DIR_BIN)/test_libSocketsModelica 
 
 # compiler and flags
 STD = --std=c99
