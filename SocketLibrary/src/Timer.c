@@ -11,7 +11,7 @@
 * Defines and macros
 ************************************************************/
 
-#define NORMAL_TIME_WAIT    10  /* in milliseconds */
+#define NORMAL_TIME_WAIT    0  /* in milliseconds */
 
 /************************************************************
 * Local structs
@@ -44,7 +44,7 @@ void wait_for_answer(int fd_source)
 {
     struct timeval now;
     gettimeofday(&now, NULL);
-    unsigned long time_left = tv_init.tv_sec + (60 * 60) - now.tv_sec;
+    unsigned long time_left = tv_init.tv_sec + (60) - now.tv_sec;
 
     struct pollfd fd_wait = {0};
     fd_wait.fd = fd_source;
@@ -58,7 +58,7 @@ void wait_for_answer(int fd_source)
 /**
  * Sets the local timeval to the current time.
  */
-void set_timer(void)
+void reset_timer(void)
 {
     gettimeofday(&tv_init, NULL);
 }

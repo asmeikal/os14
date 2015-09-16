@@ -5,15 +5,18 @@
 * Function declaration
 ************************************************************/
 
-double startServers(double t);
+void startServers(double t);
 
 double sendOM(double val, char *name, double t);
 long int sendOMcontrol(long int val, double t);
 
-double getOM(double o, char *name, double t);
-long int getOMcontrol(long int o, double t);
+// double getOM(double o, char *name, double t);
+// long int getOMcontrol(long int o, double t);
 
 double getOM_NB(double o, char *name, double t);
 long int getOMcontrol_NB(long int o, double t);
+
+void start(double t);
+double myWrite(double v, char *name, double t);
 
 #endif

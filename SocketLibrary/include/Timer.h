@@ -7,6 +7,6 @@
 
 int data_available(int fd_source);
 void wait_for_answer(int fd_source);
-void set_timer(void);
+void reset_timer(void);
 
 #endif

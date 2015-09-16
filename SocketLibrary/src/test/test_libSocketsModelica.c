@@ -47,11 +47,11 @@ int main(void)
 
         fprintf(stderr, "Sent 4 values.\n");
 
-        recv_ctrl = getOMcontrol(recv_ctrl, t);
+        recv_ctrl = getOMcontrol_NB(recv_ctrl, t);
 
         fprintf(stderr, "Received control %ld.\n", recv_ctrl);
 
-        recv_battery = getOM(recv_battery, "battery", t); 
+        recv_battery = getOM_NB(recv_battery, "battery", t); 
 
         fprintf(stderr, "Received battery: %f.\n", recv_battery);
     }

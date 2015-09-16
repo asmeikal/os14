@@ -12,7 +12,7 @@ model TestServer
     parameter Real dischargeDissipation;
     parameter Real capacity(unit = "kWh");
     Real chargeRate(unit = "kW", min = minChargeRate, max = maxChargeRate);
-    Real charge(unit = "kWh", min = capacity * 0.2, max = capacity, start = startingCharge);
+    Real charge(unit = "kWh", min = capacity * 0.19, max = capacity * 1.01, start = startingCharge);
     Real chargeRate_toGrid(unit = "kWh");
     Real chargeRate_toLoad(unit = "kWh");
   equation
@@ -45,8 +45,8 @@ model TestServer
   end HouseData;
 
   class Sockets
-    Integer control_out(start = 0);
-    Integer control_in;
+    //    Integer control_out(start = 0);
+    //    Integer control_in;
     Real MEAS_energy(unit = "kW");
     Real MEAS_consumption(unit = "kW");
     Real MEAS_production(unit = "kW");
@@ -56,20 +56,22 @@ model TestServer
     Real CMDS_battery(unit = "kW");
     //    Real CMDS_phev(unit = "kW");
 
-    function getOM
+    function getOM_NB
+      input Real o;
       input String n;
       input Real t;
       output Real y;
     
-      external y = getOM(n, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
-    end getOM;
+      external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+    end getOM_NB;
 
-    function getOMcontrol
+    function getOMcontrol_NB
+      input Integer o;
       input Real t;
       output Integer y;
     
-      external y = getOMcontrol(t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
-    end getOMcontrol;
+      external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+    end getOMcontrol_NB;
 
     function sendOM
       input Real x;
@@ -77,7 +79,7 @@ model TestServer
       input Real t;
       output Real y;
     
-      external y = sendOM(x, n, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+      external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
     end sendOM;
 
     function sendOMcontrol
@@ -85,42 +87,41 @@ model TestServer
       input Real t;
       output Integer y;
     
-      external y = sendOMcontrol(x, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+      external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
     end sendOMcontrol;
 
     function startServers
       input Real t;
       output Real y;
     
-      external y = startServers(t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+      external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
     end startServers;
-  initial algorithm
-    startServers(time);
-    control_out := control_out + 1;
-    control_out := Sockets.sendOMcontrol(control_out, time);
-    Sockets.sendOM(MEAS_energy, "energy", time);
-    Sockets.sendOM(MEAS_consumption, "consumption", time);
-    Sockets.sendOM(MEAS_production, "production", time);
-    Sockets.sendOM(MEAS_battery, "battery", time);
-    control_in := Sockets.getOMcontrol(time);
-    CMDS_battery := Sockets.getOM("battery", time);
+
+    function allWork
+      input Real cb;
+      input Real me;
+      input Real mc;
+      input Real mp;
+      input Real mb;
+      input Real t;
+      output Real y;
+    algorithm
+      y := getOM_NB(cb, "battery", t);
+      sendOM(me, "energy", t);
+      sendOM(mc, "consumption", t);
+      sendOM(mp, "production", t);
+      sendOM(mb, "battery", t);
+    end allWork;
   algorithm
-    when mod(time, 60.0) == 0.0 then
-      control_out := control_out + 1;
-      control_out := Sockets.sendOMcontrol(control_out, time);
-      Sockets.sendOM(MEAS_energy, "energy", time);
-      Sockets.sendOM(MEAS_consumption, "consumption", time);
-      Sockets.sendOM(MEAS_production, "production", time);
-      Sockets.sendOM(MEAS_battery, "battery", time);
-      control_in := Sockets.getOMcontrol(time);
-      CMDS_battery := Sockets.getOM("battery", time);
-    end when;
+    startServers(time);
+    CMDS_battery := allWork(CMDS_battery, MEAS_energy, MEAS_consumption, MEAS_production, MEAS_battery, time);
   end Sockets;
 equation
-  connect(energyConsumption, SocketsInterface.MEAS_energy);
-  connect(HouseSim.consumption, SocketsInterface.MEAS_consumption);
-  connect(HouseSim.production, SocketsInterface.MEAS_production);
-  connect(mainBattery.charge, SocketsInterface.MEAS_battery);
+  SocketsInterface.MEAS_energy = energyConsumption;
+  SocketsInterface.MEAS_consumption = HouseSim.consumption;
+  SocketsInterface.MEAS_production = HouseSim.production;
+  SocketsInterface.MEAS_battery = mainBattery.charge;
   mainBattery.chargeRate = SocketsInterface.CMDS_battery;
-  energyConsumption = HouseSim.consumption - HouseSim.production;
+  energyConsumption = HouseSim.consumption - HouseSim.production + mainBattery.chargeRate_toGrid;
+  annotation(experiment(StartTime = 0, StopTime = 48000, Tolerance = 1e-06, Interval = 0.1));
 end TestServer;

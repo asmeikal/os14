@@ -3,7 +3,6 @@
 #include <Debug.h>
 #include <House.h>
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -92,7 +91,7 @@ int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton 
                     sockets[j].accept_fd = accept(sockets[j].listen_fd, NULL, NULL);
                     sockets[j].started = 1;
                     close(sockets[j].listen_fd);
-                    PRINT_MSG("Started socket %d.\n", j);
+                    DEBUG_PRINT("Started socket %d.\n", j);
                 }
             }
             --fds_left;
@@ -100,3 +99,44 @@ int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton 
     }
     return fds_left;
 }
+
+/************************************************************
+* Socket read and write functions
+************************************************************/
+
+void recv_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("recv_complete: can't read %d bytes\n", count);
+    }
+
+    size_t n = 0, r;
+
+    while(n < count) {
+
+        r = recv(fd, buf+n, count - n, 0);
+        if(0 > r) {
+            ERROR("recv_complete: recv failed\n");
+        }
+        n += r;
+    }
+
+}
+
+void send_complete(int fd, char *buf, size_t count)
+{
+    if(0 >= count) {
+        ERROR("send_complete: can't send %d bytes\n", count);
+    }
+
+    size_t n = 0, s;
+
+    while(n < count) {
+        s = send(fd, buf+n, count - n, 0);
+        if(0 >= s) {
+            ERROR("send_complete: send failed\n");
+        }
+        n += s;
+    }
+}
+
