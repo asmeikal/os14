@@ -57,18 +57,20 @@ model TestServer
     //    Real CMDS_phev(unit = "kW");
 
     function getOM
+      input Real o;
       input String n;
       input Real t;
       output Real y;
     
-      external y = getOM(n, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+      external y = getOM(o, n, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
     end getOM;
 
     function getOMcontrol
+      input Integer o;
       input Real t;
       output Integer y;
     
-      external y = getOMcontrol(t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
+      external y = getOMcontrol(o, t) annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
     end getOMcontrol;
 
     function sendOM
@@ -102,8 +104,8 @@ model TestServer
     Sockets.sendOM(MEAS_consumption, "consumption", time);
     Sockets.sendOM(MEAS_production, "production", time);
     Sockets.sendOM(MEAS_battery, "battery", time);
-    control_in := Sockets.getOMcontrol(time);
-    CMDS_battery := Sockets.getOM("battery", time);
+    control_in := Sockets.getOMcontrol(control_in, time);
+    CMDS_battery := Sockets.getOM(CMDS_battery, "battery", time);
   algorithm
     when mod(time, 60.0) == 0.0 then
       control_out := control_out + 1;
@@ -112,8 +114,8 @@ model TestServer
       Sockets.sendOM(MEAS_consumption, "consumption", time);
       Sockets.sendOM(MEAS_production, "production", time);
       Sockets.sendOM(MEAS_battery, "battery", time);
-      control_in := Sockets.getOMcontrol(time);
-      CMDS_battery := Sockets.getOM("battery", time);
+      control_in := Sockets.getOMcontrol(control_in, time);
+      CMDS_battery := Sockets.getOM(CMDS_battery, "battery", time);
     end when;
   end Sockets;
 equation
@@ -123,4 +125,5 @@ equation
   connect(mainBattery.charge, SocketsInterface.MEAS_battery);
   mainBattery.chargeRate = SocketsInterface.CMDS_battery;
   energyConsumption = HouseSim.consumption - HouseSim.production;
+  annotation(experiment(StartTime = 0, StopTime = 128000, Tolerance = 1e-06, Interval = 0.1));
 end TestServer;
