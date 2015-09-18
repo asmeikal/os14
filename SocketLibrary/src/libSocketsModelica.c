@@ -19,17 +19,22 @@
 * Local functions declaration
 ************************************************************/
 
-static void send_all_vars(double reset_time);
-// static void get_all(void);
+static void send_all_vars(void);
 static void recv_next_var(void);
 
-static void reset_MEAS_buffer(double reset_time);
 static void send_CMDS_ack(void);
-static void reset_CMDS_buffer(double reset_time);
+
+static void reset_MEAS_buffer(const double reset_time);
+static void reset_CMDS_buffer(const double reset_time);
+
 static int isfull_MEAS_buffer(void);
 static int isfull_CMDS_buffer(void);
 static int isdelivered_CMDS_buffer(void);
-static int serverIsStarted(void);
+
+static int server_is_running(void);
+
+static void print_MEAS_buffer(void);
+static void print_CMDS_buffer(void);
 
 /************************************************************
 * Local variables
@@ -43,6 +48,7 @@ struct socket_singleton sockets[SOCKET_NUMBER] = {{0}};
 
 double last_meas_time;
 double last_cmds_time;
+double granularity;
 
 /************************************************************
 * Function definition
@@ -51,14 +57,17 @@ double last_cmds_time;
 /**
  * Listens on MEAS and CMDS ports and accepts a connection on each one.
  */
-void startServers(const double t)
+void startServers(const double t, const double comms_time_int, const unsigned long sec_per_step, const unsigned long sec_per_time_int)
 {
+    if(0.0 >= comms_time_int) {
+        ERROR("startServers: \"%f seconds\" is not a valid time interval\n", comms_time_int);
+    }
 
-    if(serverIsStarted()) {
+    if(server_is_running()) {
         ERROR("startServers: connections already started\n");
     }
 
-    dup2(fileno(fopen("log", "w")), STDERR_FILENO);
+    OPEN_DEBUG("houseServer");
 
     int fds_left = SOCKET_NUMBER;
     struct pollfd fds[SOCKET_NUMBER] = {{0}};
@@ -86,51 +95,19 @@ void startServers(const double t)
 
     } while (0 < fds_left);
 
-    DEBUG_PRINT("startServers: all connection accepted at time %f\n", t);
+    DEBUG_PRINT("startServers: all connection accepted at simulation time %f\n", t);
 
     /* Initialize buffers */
     control_buffer = GB_initLongInt(SOCKET_NUMBER);
     meas_buffer = GB_initDouble(MEAS_NUMBER);
     cmds_buffer = GB_initDouble(CMDS_NUMBER);
 
-    reset_MEAS_buffer(-60.0);
-    reset_CMDS_buffer(0.0);
+    granularity = comms_time_int;
+    setup_timer(sec_per_time_int, sec_per_step);
 
-}
+    reset_MEAS_buffer(t - comms_time_int);
+    reset_CMDS_buffer(t);
 
-/**
- * Buffers the control message [val]. Sends all values if MEAS buffer
- * is full.
- * Throws error if control message has already been buffered.
- */
-long int sendOMcontrol(long int val, const double t)
-{
-    DEBUG_PRINT("sendOMcontrol: called with val: %ld, t: %f\n", val, t);
-    if(!serverIsStarted()) {
-        WARNING("sendOMcontrol: server is not started yet\n");
-        return val;
-    }
-    if(GB_isSet(control_buffer, SOCKET_MEAS)) {
-        /* We already have a buffered value... something went wrong */
-        ERROR("sendOMcontrol: control already set\n");
-    }
-
-    if(t != (last_meas_time + 60.0)) {
-        return val;
-    }
-
-
-    GB_setLongIntValue(control_buffer, SOCKET_MEAS, val);
-
-    if(GB_isSet(control_buffer, SOCKET_MEAS) && 
-       GB_isFull(meas_buffer)) 
-    {
-        /* The buffer is full, send it */
-        send_all_vars(t);
-        /* Now the buffer is empty */
-    }
-
-    return val;
 }
 
 /**
@@ -138,14 +115,11 @@ long int sendOMcontrol(long int val, const double t)
  * buffer is full. Throws econnectrror if [name] variable has already been
  * buffered.
  */
-double sendOM(double val, char *name, const double t)
+double sendOM(const double val, const char * const name, const double t)
 {
-    DEBUG_PRINT("sendOM: called with val: %f, name: %s, t: %f\n", val, name, t);
-    if(!serverIsStarted()) {
-        WARNING("sendOM: server is not started yet\n");
-        return val;
-    }
-    if(t != (last_meas_time + 60.0)) {
+    // DEBUG_PRINT("sendOM: called with val: %f, name: %s, t: %f\n", val, name, t);
+    if(!server_is_running()) {
+        WARNING("sendOM: server has not been started yet\n");
         return val;
     }
 
@@ -158,91 +132,28 @@ double sendOM(double val, char *name, const double t)
         ERROR("sendOM: unkwon name '%s'\n", name);
     }
 
-    if(GB_isSet(meas_buffer, n)) {
-        ERROR("sendOM: '%s' already set\n", name);
-    }
+    if(t >= (last_meas_time + granularity)) {
+        /* Last time we sent was more than an hour ago */
 
-    GB_setDoubleValue(meas_buffer, n, val);
+        if(GB_isSet(meas_buffer, n)) {
+            WARNING("sendOM: '%s' already set\n", name);
+        }
 
-    if(isfull_MEAS_buffer()) 
-    {
-        /* The buffer is full, send it */
-        send_all_vars(t);
-        /* Now the buffer is empty */
+        GB_setDoubleValue(meas_buffer, n, val);
+
+        if(isfull_MEAS_buffer() &&
+           data_available(sockets[SOCKET_MEAS].accept_fd)) 
+        {
+            /* The buffer is full, send it */
+            DEBUG_PRINT("sendOM: server asked for measurements at time %.2f\n", t);
+            print_MEAS_buffer();
+            send_all_vars();
+            /* Empty the MEAS buffer and control variable */
+            reset_MEAS_buffer(reset_time);
+        }
     }
 
     return val;
-}
-
-/**
- * Returns the control message received from CMDS socket. If the
- * control message has already been taken, throws an error. If the 
- * CMDS buffer is empty, loads data from the socket.
- */
-long int getOMcontrol_NB(long int o, const double t)
-{
-    // DEBUG_PRINT("getOMcontrol_NB: called with (o: %ld, t: %f)\n", o, t);
-
-    long int ret;
-    DEBUG_PRINT("getOMcontrol_NB: called with o: %ld, t: %f\n", o, t);
-    if(!serverIsStarted()) {
-        WARNING("getOMcontrol_NB: server is not started yet\n");
-        return o;
-    }
-
-    if(t < last_cmds_time) {
-        ERROR("time is decreasing?? %f >= %f\n", t, last_cmds_time);
-    }
-
-    if(t == (last_cmds_time + 60.0)) 
-    {
-        /* One hour has passed, get all commands */
-
-        /* If CMDS buffers are not full... */
-        while(!isfull_CMDS_buffer()) 
-        {
-            /* ... wait and receive */
-            DEBUG_PRINT("waiting for answer...\n");
-            wait_for_answer(sockets[SOCKET_CMDS].accept_fd);
-            recv_next_var();
-            GB_print(cmds_buffer);
-        }
-
-        /* Set current var as delivered */
-        GB_markAsDelivered(control_buffer, SOCKET_CMDS);
-        ret = GB_getLongIntValue(control_buffer, SOCKET_CMDS);
-
-        /* If all have been delivered, reset buffer */
-        if(isdelivered_CMDS_buffer()) 
-        {
-            send_CMDS_ack();
-            reset_CMDS_buffer(t);
-        }
-    }
-    else {
-        /* We can still wait */
-
-        /* Receive only if data available and buffer not full */
-        while(data_available(sockets[SOCKET_CMDS].accept_fd) && 
-              !isfull_CMDS_buffer()) 
-        {
-            recv_next_var();
-            GB_print(cmds_buffer);
-        }
-
-
-        /* If we already have new data, deliver it. 
-         * Otherwise, deliver the old value */
-        if(GB_isSet(control_buffer, SOCKET_CMDS)) {
-            ret = GB_getLongIntValue(control_buffer, SOCKET_CMDS);
-        }
-        else {
-            ret = o;
-        }
-
-    }
-
-    return ret;
 }
 
 /**
@@ -250,31 +161,25 @@ long int getOMcontrol_NB(long int o, const double t)
  * [name] variable has already been taken, throws an error. If the 
  * CMDS buffer is empty, loads data from the socket.
  */
-double getOM_NB(double o, char *name, const double t)
+double getOM(const double val, const char * const name, const double t)
 {
-    // DEBUG_PRINT("getOM_NB: called with (o: %f, name: \"%s\" t: %f)\n", o, name, t);
-    DEBUG_PRINT("getOM_NB: called with o: %f, name: %s, t: %f\n", o, name, t);
-    if(!serverIsStarted()) {
-        WARNING("getOM_NB: server is not started yet\n");
+    if(!server_is_running()) {
+        WARNING("getOM: server has not been started yet\n");
         return o;
     }
 
     if(NULL == name) {
-        ERROR("getOM_NB: NULL pointer argument\n");
+        ERROR("getOM: NULL pointer argument\n");
     }
 
     double ret;
     Commands n = get_CMDS_num_from_name(name);
 
     if((-1 == n) || (n >= CMDS_NUMBER)) {
-        ERROR("getOM_NB: unkwon name '%s'\n", name);
+        ERROR("getOM: unkwon name '%s'\n", name);
     }
 
-    if(t < last_cmds_time) {
-        ERROR("time is decreasing?? %f >= %f\n", t, last_cmds_time);
-    }
-
-    if(t == (last_cmds_time + 60.0)) 
+    if(t >= (last_cmds_time + granularity)) 
     {
         /* One hour has passed, get all commands */
 
@@ -282,15 +187,28 @@ double getOM_NB(double o, char *name, const double t)
         while(!isfull_CMDS_buffer()) 
         {
             /* ... wait and receive */
-            DEBUG_PRINT("waiting for answer...\n");
-            wait_for_answer(sockets[SOCKET_CMDS].accept_fd);
+            if(!wait_for_answer(sockets[SOCKET_CMDS].accept_fd)) {
+                WARNING("getOM: controller timed out\n");
+                break;
+            }
+
             recv_next_var();
-            GB_print(cmds_buffer);
+
+            /* Debug: print buffer when received */
+            if(isfull_CMDS_buffer()) {
+                DEBUG_PRINT("getOM: received commands after %.2f time units\n", fmod(t, granularity));
+                print_CMDS_buffer();
+            }
         }
 
         /* Set current var as delivered */
+        if(GB_isSet(cmds_buffer, n)) {
+            ret = GB_getDoubleValue(cmds_buffer, n);
+        }
+        else {
+            ret = val;
+        }
         GB_markAsDelivered(cmds_buffer, n);
-        ret = GB_getDoubleValue(cmds_buffer, n);
 
         /* If all have been delivered, reset buffer */
         if(isdelivered_CMDS_buffer()) 
@@ -303,13 +221,17 @@ double getOM_NB(double o, char *name, const double t)
         /* We can still wait */
 
         /* Receive only if data available and buffer not full */
-        while(data_available(sockets[SOCKET_CMDS].accept_fd) && 
-              !isfull_CMDS_buffer()) 
+        while(!isfull_CMDS_buffer() &&
+              data_available(sockets[SOCKET_CMDS].accept_fd)) 
         {
             recv_next_var();
-            GB_print(cmds_buffer);
-        }
 
+            /* Debug: print buffer when received */
+            if(isfull_CMDS_buffer()) {
+                DEBUG_PRINT("getOM: received commands after %.2f time units\n", fmod(t, granularity) );
+                print_CMDS_buffer();
+            }
+        }
 
         /* If we already have new data, deliver it. 
          * Otherwise, deliver the old value */
@@ -317,7 +239,7 @@ double getOM_NB(double o, char *name, const double t)
             ret = GB_getDoubleValue(cmds_buffer, n);
         }
         else {
-            ret = o;
+            ret = val;
         }
 
     }
@@ -333,19 +255,9 @@ double getOM_NB(double o, char *name, const double t)
  * Sends all MEAS buffer values + the MEAS control through the MEAS
  * socket.
  */
-static void send_all_vars(double reset_time)
+static void send_all_vars(void)
 {
-    // static long int count = 0;
-    // ++count;
-    // if(count != GB_getLongIntValue(control_buffer, SOCKET_MEAS)) {
-    //     ERROR("send_all_vars: called %ld times, but control is %ld\n", count, GB_getLongIntValue(control_buffer, SOCKET_MEAS));
-    // }
-
-    // DEBUG_PRINT("send_all_vars: sending\n");
-    // DEBUG_PRINT("control: %d\n", control_buffer[SOCKET_MEAS].value);
-    // print_MEAS_buffer();
-
-    if(!serverIsStarted()) {
+    if(!server_is_running()) {
         ERROR("send_all_vars: sockets not started\n");
     }
 
@@ -353,19 +265,18 @@ static void send_all_vars(double reset_time)
         ERROR("send_all_vars: MEAS buffer not full\n");
     }
 
-    int n;
     Measures i;
-    long int message_in, control_out;
+    long int message_in;
     double meas_out;
 
     /* Receive control message from server */
     recv_complete(sockets[SOCKET_MEAS].accept_fd, (char*)&message_in, sizeof (long int));
-    DEBUG_PRINT("send_all_vars: control message from server is %ld\n", message_in);
+    DEBUG_PRINT("send_all_vars: control message from server is \"%ld\"\n", message_in);
 
     /* Send back control message */
     // control_out = GB_getLongIntValue(control_buffer, SOCKET_MEAS);
     send_complete(sockets[SOCKET_MEAS].accept_fd, (char *)&message_in, sizeof (long int));
-    DEBUG_PRINT("send_all_vars: sent control message %ld\n", message_in);
+    DEBUG_PRINT("send_all_vars: sent control message \"%ld\" back\n", message_in);
 
     /* Send all values in the MEAS buffer */
     for (i = 0; i < MEAS_NUMBER; i++) {
@@ -373,14 +284,11 @@ static void send_all_vars(double reset_time)
         send_complete(sockets[SOCKET_MEAS].accept_fd, (char *)&meas_out, sizeof(double));
     }
 
-    /* Empty the MEAS buffer and control variable */
-    reset_MEAS_buffer(reset_time);
-
 }
 
 static void recv_next_var(void)
 {
-    if(!serverIsStarted()) {
+    if(!server_is_running()) {
         ERROR("recv_next_var: sockets not started\n");
     }
 
@@ -388,12 +296,11 @@ static void recv_next_var(void)
         ERROR("recv_next_var: CMDS buffer is full\n");
     }
 
-    // DEBUG_PRINT("recv_next_var: receiving\n");
     if(!GB_isSet(control_buffer, SOCKET_CMDS)) {
         /* Control is missing, get it */
-        DEBUG_PRINT("recv_next_var: received control\n");
         long int control_in;
         recv_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&control_in, sizeof(long int));
+        DEBUG_PRINT("recv_next_var: received control\n");
         GB_setLongIntValue(control_buffer, SOCKET_CMDS, control_in);
         GB_markAsDelivered(control_buffer, SOCKET_CMDS);
         return;
@@ -405,7 +312,7 @@ static void recv_next_var(void)
 
         for(i = 0; i < CMDS_NUMBER; ++i) {
             if(!GB_isSet(cmds_buffer, i)) {
-                DEBUG_PRINT("recv_next_var: received command %d\n", i);
+                DEBUG_PRINT("recv_next_var: received command \"%s\"\n", get_CMDS_name_from_num(i));
                 recv_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&cmds_in, sizeof(double));
                 GB_setDoubleValue(cmds_buffer, i, cmds_in);
 
@@ -428,7 +335,7 @@ static void recv_next_var(void)
 * Local buffer utilities
 ************************************************************/
 
-static void reset_MEAS_buffer(double reset_time)
+static void reset_MEAS_buffer(const double reset_time)
 {
     GB_unset(control_buffer, SOCKET_MEAS);
     GB_empty(meas_buffer);
@@ -449,14 +356,14 @@ static void reset_MEAS_buffer(double reset_time)
  */
 static void send_CMDS_ack(void)
 {
-    DEBUG_PRINT("CMDS ack sent\n");
     long int ctrl_back = 0;
     send_complete(sockets[SOCKET_CMDS].accept_fd, (char *)&ctrl_back, sizeof (long int));    
+    DEBUG_PRINT("send_CMDS_ack: ack sent\n");
 }
 
-static void reset_CMDS_buffer(double reset_time)
+static void reset_CMDS_buffer(const double reset_time)
 {
-    DEBUG_PRINT("reset_CMDS_buffer: resetting at time %f\n", reset_time);
+    // DEBUG_PRINT("reset_CMDS_buffer: resetting at time %f\n", reset_time);
 
     GB_unset(control_buffer, SOCKET_CMDS);
     GB_empty(cmds_buffer);
@@ -467,7 +374,7 @@ static void reset_CMDS_buffer(double reset_time)
 
 }
 
-static int serverIsStarted(void) 
+static int server_is_running(void) 
 {
     return (0 != sockets[SOCKET_CMDS].accept_fd) || (0 != sockets[SOCKET_MEAS].accept_fd);
 }
@@ -487,17 +394,13 @@ static int isdelivered_CMDS_buffer(void)
     return GB_isDelivered(control_buffer, SOCKET_CMDS) && GB_isAllDelivered(cmds_buffer);
 }
 
-
-void start(double t)
+static void print_MEAS_buffer(void)
 {
-    dup2(fileno(fopen("log", "w")), STDERR_FILENO);
-
-    DEBUG_PRINT("started at time %f\n", t);
+    GB_printDecorated(meas_buffer, (PrintFunction) get_MEAS_name_from_num);
 }
 
-double myWrite(double v, char *name, double t)
+static void print_CMDS_buffer(void)
 {
-    DEBUG_PRINT("Received \"%s\" at time %f with value %f\n", name, t, v);
-    return v;
+    GB_printDecorated(cmds_buffer, (PrintFunction) get_CMDS_name_from_num);
 }
 

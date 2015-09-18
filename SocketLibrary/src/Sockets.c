@@ -20,7 +20,7 @@
  * address.
  * Return value is non-negative on success, negative on failure.
  */
-int socketBuilder(unsigned short port, unsigned int max_con)
+int socketBuilder(const unsigned short port, const unsigned int max_con)
 {
     int errors = 0, result = 0, yes = 1;
     struct sockaddr_in addr = {0};
@@ -56,7 +56,7 @@ int socketBuilder(unsigned short port, unsigned int max_con)
  * Builds a pollfd with [fds_left] file descriptors, taken from the
  * [sockets] not already started. Checks for read events.
  */
-void buildPoll(struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
+void buildPoll(struct pollfd *fds, const int fds_left, struct socket_singleton *sockets)
 {
     if(0 >= fds_left) return;
 
@@ -76,7 +76,7 @@ void buildPoll(struct pollfd *fds, int fds_left, struct socket_singleton *socket
  * Accepts a connection from all ready file descriptors, and returns 
  * the number of file descriptors who must still be started.
  */
-int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
+int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
 {
     int i, j, m, found;
 
@@ -104,7 +104,7 @@ int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton 
 * Socket read and write functions
 ************************************************************/
 
-void recv_complete(int fd, char *buf, size_t count)
+void recv_complete(const int fd, char *buf, const size_t count)
 {
     if(0 >= count) {
         ERROR("recv_complete: can't read %d bytes\n", count);
@@ -123,7 +123,7 @@ void recv_complete(int fd, char *buf, size_t count)
 
 }
 
-void send_complete(int fd, char *buf, size_t count)
+void send_complete(const int fd, const char * const buf, size_t const count)
 {
     if(0 >= count) {
         ERROR("send_complete: can't send %d bytes\n", count);

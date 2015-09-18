@@ -5,18 +5,10 @@
 * Function declaration
 ************************************************************/
 
-void startServers(double t);
+void startServers(const double t, const double comms_time_int, const long int sec_per_step, const long int sec_per_time_int);
 
-double sendOM(double val, char *name, double t);
-long int sendOMcontrol(long int val, double t);
+double sendOM(const double val, const char * const name, const double t);
 
-// double getOM(double o, char *name, double t);
-// long int getOMcontrol(long int o, double t);
-
-double getOM_NB(double o, char *name, double t);
-long int getOMcontrol_NB(long int o, double t);
-
-void start(double t);
-double myWrite(double v, char *name, double t);
+double getOM(const double o, const char * const name, const double t);
 
 #endif

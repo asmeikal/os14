@@ -46,10 +46,12 @@ struct buffer_general {
 * Local functions declaration
 ************************************************************/
 
-static GBuffer GB_init(int size, enum buffer_type_t type);
+static GBuffer GB_init(const int size, const enum buffer_type_t type);
 
 static void GB_printBufferDouble(GBuffer b);
 static void GB_printBufferLongInt(GBuffer b);
+static void GB_printBufferDoubleDecorated(GBuffer b, PrintFunction f);
+static void GB_printBufferLongIntDecorated(GBuffer b, PrintFunction f);
 
 /************************************************************
 * Initialization functions
@@ -58,7 +60,7 @@ static void GB_printBufferLongInt(GBuffer b);
 /**
  * Returns a pointer to a new GeneralBuffer<Double>
  */
-GBuffer GB_initDouble(int size)
+GBuffer GB_initDouble(const int size)
 {
     return GB_init(size, BUFFER_DOUBLE);
 }
@@ -66,7 +68,7 @@ GBuffer GB_initDouble(int size)
 /**
  * Returns a pointer to a new GeneralBuffer<LongInt>
  */
-GBuffer GB_initLongInt(int size)
+GBuffer GB_initLongInt(const int size)
 {
     return GB_init(size, BUFFER_LONG_INT);
 }
@@ -74,7 +76,7 @@ GBuffer GB_initLongInt(int size)
 /**
  * Returns a pointer to a new (and empty) GeneralBuffer<type>
  */
-static GBuffer GB_init(int size, enum buffer_type_t type)
+static GBuffer GB_init(const int size, const enum buffer_type_t type)
 {
     if(BUFFER_TYPE_NUMBER <= type) {
         ERROR("GB_init: type not recognized\n");
@@ -112,7 +114,7 @@ static GBuffer GB_init(int size, enum buffer_type_t type)
  * the value is not set, the buffer is not a double buffer, 
  * or the index is out of range.
  */
-double GB_getDoubleValue(GBuffer b, int i)
+double GB_getDoubleValue(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_getDoubleValue: NULL pointer argument\n");
@@ -138,7 +140,7 @@ double GB_getDoubleValue(GBuffer b, int i)
  * the value is not set, the buffer is not a long int buffer, 
  * or the index is out of range.
  */
-long int GB_getLongIntValue(GBuffer b, int i)
+long int GB_getLongIntValue(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_getLongIntValue: NULL pointer argument\n");
@@ -168,7 +170,7 @@ long int GB_getLongIntValue(GBuffer b, int i)
  * the buffer is not a double buffer or the index is out of range.
  * Gives a warning if the index was not empty.
  */
-void GB_setDoubleValue(GBuffer b, int i, double v)
+void GB_setDoubleValue(GBuffer b, const int i, const double v)
 {
     if(NULL == b) {
         ERROR("GB_setDoubleValue: NULL pointer argument\n");
@@ -195,7 +197,7 @@ void GB_setDoubleValue(GBuffer b, int i, double v)
  * the buffer is not a long int buffer or the index is out of range.
  * Gives a warning if the index was not empty.
  */
-void GB_setLongIntValue(GBuffer b, int i, long int v)
+void GB_setLongIntValue(GBuffer b, const int i, const long int v)
 {
     if(NULL == b) {
         ERROR("GB_setLongIntValue: NULL pointer argument\n");
@@ -244,7 +246,7 @@ void GB_empty(GBuffer b)
  * Marks the index [i] as set. Gives a warning if the index was 
  * already set.
  */
-void GB_set(GBuffer b, int i)
+void GB_set(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_set: NULL pointer argument\n");
@@ -265,7 +267,7 @@ void GB_set(GBuffer b, int i)
  * Marks the index [i] as empty. Gives a warning if the index was 
  * already empty.
  */
-void GB_unset(GBuffer b, int i)
+void GB_unset(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_unset: NULL pointer argument\n");
@@ -286,7 +288,7 @@ void GB_unset(GBuffer b, int i)
  * Marks the index [i] as delivered. Gives a warning if the index was 
  * empty or already delivered.
  */
-void GB_markAsDelivered(GBuffer b, int i)
+void GB_markAsDelivered(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_markAsDelivered: NULL pointer argument\n");
@@ -315,7 +317,7 @@ void GB_markAsDelivered(GBuffer b, int i)
 /**
  * Returns 0 if the index [i] is empty, non-zero otherwise.
  */
-int GB_isSet(GBuffer b, int i)
+int GB_isSet(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_isSet: NULL pointer argument\n");
@@ -332,7 +334,7 @@ int GB_isSet(GBuffer b, int i)
  * Returns 0 if the index [i] is not marked as delivered, 
  * non-zero otherwise.
  */
-int GB_isDelivered(GBuffer b, int i)
+int GB_isDelivered(GBuffer b, const int i)
 {
     if(NULL == b) {
         ERROR("GB_isDelivered: NULL pointer argument\n");
@@ -420,6 +422,16 @@ void GB_print(GBuffer b)
     }
 }
 
+void GB_printDecorated(GBuffer b, PrintFunction f)
+{
+    if(BUFFER_DOUBLE == b->type) {
+        GB_printBufferDoubleDecorated(b, f);
+    }
+    else {
+        GB_printBufferLongIntDecorated(b, f);
+    }
+}
+
 static void GB_printBufferDouble(GBuffer b)
 {
     if(NULL == b) {
@@ -428,7 +440,7 @@ static void GB_printBufferDouble(GBuffer b)
 
     int i;
 
-    DEBUG_PRINT("=== GeneralBuffer<Double>[%d] ===\n", b->size);
+    DEBUG_PRINT("\n=== GeneralBuffer<Double>[%d] ===\n", b->size);
     for(i = 0; i < b->size; ++i) {
         if(b->head[i].status == BUFFER_STATUS_EMPTY) {
             DEBUG_PRINT("[%d]: (empty)\n", i);
@@ -437,9 +449,8 @@ static void GB_printBufferDouble(GBuffer b)
             DEBUG_PRINT("[%d]: %f%s\n", i, b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
         }
     }
-    DEBUG_PRINT("=== === === === === === === === ===\n");
+    DEBUG_PRINT("================================\n\n");
 }
-
 
 static void GB_printBufferLongInt(GBuffer b)
 {
@@ -449,7 +460,7 @@ static void GB_printBufferLongInt(GBuffer b)
 
     int i;
 
-    DEBUG_PRINT("=== GeneralBuffer<LongInt>[%d] ===\n", b->size);
+    DEBUG_PRINT("\n=== GeneralBuffer<LongInt>[%d] ===\n", b->size);
     for(i = 0; i < b->size; ++i) {
         if(b->head[i].status == BUFFER_STATUS_EMPTY) {
             DEBUG_PRINT("[%d]: (empty)\n", i);
@@ -458,6 +469,46 @@ static void GB_printBufferLongInt(GBuffer b)
             DEBUG_PRINT("[%d]: %ld%s\n", i, b->head[i].value.int_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
         }
     }
-    DEBUG_PRINT("=== === === === === === === === ===\n");
+    DEBUG_PRINT("=================================\n\n");
+}
+
+static void GB_printBufferDoubleDecorated(GBuffer b, PrintFunction f)
+{
+    if((NULL == b) || (NULL == f)) {
+        ERROR("GB_printBufferDouble: NULL pointer argument\n");
+    }
+
+    int i;
+
+    DEBUG_PRINT("\n=== GeneralBuffer<Double>[%d] ===\n", b->size);
+    for(i = 0; i < b->size; ++i) {
+        if(b->head[i].status == BUFFER_STATUS_EMPTY) {
+            DEBUG_PRINT("\"%s\": (empty)\n", f(i));
+        }
+        else {
+            DEBUG_PRINT("\"%s\": %f%s\n", f(i), b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
+        }
+    }
+    DEBUG_PRINT("================================\n\n");
+}
+
+static void GB_printBufferLongIntDecorated(GBuffer b, PrintFunction f)
+{
+    if((NULL == b) || (NULL == f)) {
+        ERROR("GB_printBufferLongInt: NULL pointer argument\n");
+    }
+
+    int i;
+
+    DEBUG_PRINT("\n=== GeneralBuffer<LongInt>[%d] ===\n", b->size);
+    for(i = 0; i < b->size; ++i) {
+        if(b->head[i].status == BUFFER_STATUS_EMPTY) {
+            DEBUG_PRINT("\"%s\": (empty)\n", f(i));
+        }
+        else {
+            DEBUG_PRINT("\"%s\": %ld%s\n", f(i), b->head[i].value.int_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
+        }
+    }
+    DEBUG_PRINT("=================================\n\n");
 }
 

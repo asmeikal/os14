@@ -18,6 +18,7 @@ OBJ_LIBS = $(OBJ_DIR)/libSocketsModelica.o \
 			$(OBJ_DIR)/Sockets.o \
 			$(OBJ_DIR)/House.o \
 			$(OBJ_DIR)/Buffers.o \
+            $(OBJ_DIR)/Debug.o \
 			$(OBJ_DIR)/Timer.o
 
 # library

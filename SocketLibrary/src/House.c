@@ -10,7 +10,7 @@
 * Function definition
 ************************************************************/
 
-Measures get_MEAS_num_from_name(char *name)
+Measures get_MEAS_num_from_name(const char * const name)
 {
     if(NULL == name) {
         ERROR("get_MEAS_num_from_name: NULL pointer argument\n");
@@ -39,7 +39,7 @@ Measures get_MEAS_num_from_name(char *name)
     }
 }
 
-Commands get_CMDS_num_from_name(char *name)
+Commands get_CMDS_num_from_name(const char * const name)
 {
     if(NULL == name) {
         ERROR("get_CMDS_num_from_name: NULL pointer argument\n");
@@ -53,6 +53,39 @@ Commands get_CMDS_num_from_name(char *name)
     }
     else {
         return -1;
+    }
+}
+
+
+const char * const get_MEAS_name_from_num(const Measures c)
+{
+    switch (c) {
+        case MEAS_ENERGY:
+            return "energy requested to grid";
+        case MEAS_CONSUMPTION:
+            return "energy consumption";
+        case MEAS_PRODUCTION:
+            return "energy production";
+        case MEAS_BATTERY:
+            return "battery charge";
+        case MEAS_PHEV:
+            return "PHEV charge";
+        case MEAS_PHEV_READY_HOURS:
+            return "PHEV ready hours";
+        default:
+            ERROR("get_MEAS_name_from_num: measurement type not recognized\n");
+    }
+}
+
+const char * const get_CMDS_name_from_num(const Commands c)
+{
+    switch (c) {
+        case CMDS_BATTERY:
+            return "battery charge rate";
+        case CMDS_PHEV:
+            return "PHEV charge rate";
+        default:
+            ERROR("get_MEAS_name_from_num: measurement type not recognized\n");
     }
 }
 

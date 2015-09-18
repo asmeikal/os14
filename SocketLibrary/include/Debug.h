@@ -9,6 +9,8 @@
 * Debug macros
 ************************************************************/
 
+void OPEN_DEBUG(const char * const fname);
+
 #define ERROR(...) \
             do { \
                 WARNING(__VA_ARGS__); \
@@ -33,3 +35,4 @@
 
 
 #endif
+
