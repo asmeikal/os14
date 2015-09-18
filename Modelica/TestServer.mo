@@ -4,7 +4,7 @@ model TestServer
   /* The simulation sends data to and asks data from the server every [step_time_int] units of the [time] var. */
   parameter Real step_time_int = 1.0;
   /* The following two parameters set how much time the server waits to get an answer from the controller. [stepLen] sets how many seconds the server waits to check answer availability, [intervalLen] sets how many seconds the server waits in total to get an answer from the controller. */
-  parameter Integer stepLen(unit = "s") = 1;
+  parameter Integer stepLen(unit = "s") = 60;
   parameter Integer intervalLen(unit = "s") = 3600;
   Real energyConsumption(unit = "kW");
   TestServer.HouseData HouseSim;

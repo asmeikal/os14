@@ -149,7 +149,7 @@ double sendOM(const double val, const char * const name, const double t)
             print_MEAS_buffer();
             send_all_vars();
             /* Empty the MEAS buffer and control variable */
-            reset_MEAS_buffer(reset_time);
+            reset_MEAS_buffer(t);
         }
     }
 
@@ -165,7 +165,7 @@ double getOM(const double val, const char * const name, const double t)
 {
     if(!server_is_running()) {
         WARNING("getOM: server has not been started yet\n");
-        return o;
+        return val;
     }
 
     if(NULL == name) {
@@ -188,26 +188,27 @@ double getOM(const double val, const char * const name, const double t)
         {
             /* ... wait and receive */
             if(!wait_for_answer(sockets[SOCKET_CMDS].accept_fd)) {
+                /* The program could crash on timeout, with ERROR() */
                 WARNING("getOM: controller timed out\n");
                 break;
             }
 
             recv_next_var();
 
-            /* Debug: print buffer when received */
+            /* Debug: print buffer when received all */
             if(isfull_CMDS_buffer()) {
                 DEBUG_PRINT("getOM: received commands after %.2f time units\n", fmod(t, granularity));
                 print_CMDS_buffer();
             }
         }
 
-        /* Set current var as delivered */
         if(GB_isSet(cmds_buffer, n)) {
             ret = GB_getDoubleValue(cmds_buffer, n);
         }
         else {
             ret = val;
         }
+        /* Set current var as delivered */
         GB_markAsDelivered(cmds_buffer, n);
 
         /* If all have been delivered, reset buffer */
@@ -226,7 +227,7 @@ double getOM(const double val, const char * const name, const double t)
         {
             recv_next_var();
 
-            /* Debug: print buffer when received */
+            /* Debug: print buffer when received all */
             if(isfull_CMDS_buffer()) {
                 DEBUG_PRINT("getOM: received commands after %.2f time units\n", fmod(t, granularity) );
                 print_CMDS_buffer();
@@ -286,6 +287,10 @@ static void send_all_vars(void)
 
 }
 
+/**
+ * If the CMDS buffer is not full, receives a value from the CMDS socket.
+ * The expected order is CMDS_CONTROL, CMDS_BATTERY, CMDS_PHEV.
+ */
 static void recv_next_var(void)
 {
     if(!server_is_running()) {
