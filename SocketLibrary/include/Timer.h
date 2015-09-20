@@ -5,8 +5,9 @@
 * Function declaration
 ************************************************************/
 
-int data_available(int fd_source);
-void wait_for_answer(int fd_source);
-void set_timer(void);
+int data_available(const int fd_source);
+int wait_for_answer(const int fd_source);
+void reset_timer(void);
+void setup_timer(const unsigned int param_simulation_speed, const unsigned int param_queries_per_int);
 
 #endif

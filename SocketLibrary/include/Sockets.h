@@ -1,6 +1,7 @@
 #ifndef __SOCKETS_H
 #define __SOCKETS_H
 
+#include <stdlib.h>
 #include <poll.h>
 
 /************************************************************
@@ -15,10 +16,14 @@ struct socket_singleton {
 
 /************************************************************
 * Function declaration
-************************************************************/
+****************************size_t********************************/
 
-int socketBuilder(unsigned short port, unsigned int max_con);
-void buildPoll(struct pollfd *fds, int fds_left, struct socket_singleton *sockets);
-int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton *sockets);
+int socketBuilder(const unsigned short port, const unsigned int max_con);
+void buildPoll(struct pollfd *fds, const int fds_left, struct socket_singleton *sockets);
+int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_singleton *sockets);
+
+void recv_complete(const int fd, char *buf, const size_t count);
+void send_complete(const int fd, const char * const buf, const size_t count);
+
 
 #endif

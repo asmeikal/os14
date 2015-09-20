@@ -17,6 +17,8 @@ INCLUDE = -I. -I$(HDR_DIR)
 OBJ_LIBS = $(OBJ_DIR)/libSocketsModelica.o \
 			$(OBJ_DIR)/Sockets.o \
 			$(OBJ_DIR)/House.o \
+			$(OBJ_DIR)/Buffers.o \
+            $(OBJ_DIR)/Debug.o \
 			$(OBJ_DIR)/Timer.o
 
 # library
@@ -30,8 +32,10 @@ TEST_DIR_SRC = $(SRC_DIR)/test
 TEST_DIR_OBJ = $(OBJ_DIR)/test
 TEST_DIR_BIN = $(BIN_DIR)/test
 
-TEST_OBJS = $(TEST_DIR_OBJ)/test_libSocketsModelica.o 
-TEST_BINS = $(TEST_DIR_BIN)/test_libSocketsModelica 
+TEST_OBJS = $(TEST_DIR_OBJ)/test_libSocketsModelica.o \
+			$(TEST_DIR_OBJ)/test_buffers.o
+TEST_BINS = $(TEST_DIR_BIN)/test_libSocketsModelica \
+			$(TEST_DIR_BIN)/test_buffers
 
 # compiler and flags
 STD = --std=c99
@@ -53,11 +57,11 @@ CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused $(INCLUDE)
 # object files
 $(OBJ_LIBS): $(HEADERS)
 	test -d $(OBJ_DIR) || mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(SRC_DIR)/$(@F:.o=.c) -c -o $@ 
+	$(CC) $(CFLAGS) $(SRC_DIR)/$(@F:.o=.c) -c -o $@ -lm
 
 $(TEST_OBJS): $(HEADERS)
 	test -d $(TEST_DIR_OBJ) || mkdir -p $(TEST_DIR_OBJ)
-	$(CC) $(CFLAGS) $(TEST_DIR_SRC)/$(@F:.o=.c) -c -o $@
+	$(CC) $(CFLAGS) $(TEST_DIR_SRC)/$(@F:.o=.c) -c -o $@ -lm
 
 # library
 $(LIB): $(OBJ_LIBS)
@@ -70,7 +74,7 @@ $(LIB): $(OBJ_LIBS)
 # binaries
 $(TEST_BINS): $(LIB) $(TEST_OBJS)
 	test -d $(TEST_DIR_BIN) || mkdir -p $(TEST_DIR_BIN)
-	$(CC) $(CFLAGS) $(TEST_DIR_OBJ)/$(@F).o -L$(LIB_DIR) -l$(LIB_NAME) -o $@
+	$(CC) $(CFLAGS) $(TEST_DIR_OBJ)/$(@F).o -L$(LIB_DIR) -l$(LIB_NAME) -o $@ -lm
 
 
 # # # # # # # # # # #
@@ -82,8 +86,8 @@ prod: all
 
 all: $(LIB)
 
-tests: $(TEST_BINS)
 tests: all
+tests: $(TEST_BINS)
 
 clean: 
 	rm -rf $(MODELICA)/lib$(LIB_NAME).a $(MODELICA)/lib$(LIB_NAME).h

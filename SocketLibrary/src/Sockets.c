@@ -3,7 +3,6 @@
 #include <Debug.h>
 #include <House.h>
 
-#include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -21,7 +20,7 @@
  * address.
  * Return value is non-negative on success, negative on failure.
  */
-int socketBuilder(unsigned short port, unsigned int max_con)
+int socketBuilder(const unsigned short port, const unsigned int max_con)
 {
     int errors = 0, result = 0, yes = 1;
     struct sockaddr_in addr = {0};
@@ -57,7 +56,7 @@ int socketBuilder(unsigned short port, unsigned int max_con)
  * Builds a pollfd with [fds_left] file descriptors, taken from the
  * [sockets] not already started. Checks for read events.
  */
-void buildPoll(struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
+void buildPoll(struct pollfd *fds, const int fds_left, struct socket_singleton *sockets)
 {
     if(0 >= fds_left) return;
 
@@ -77,7 +76,7 @@ void buildPoll(struct pollfd *fds, int fds_left, struct socket_singleton *socket
  * Accepts a connection from all ready file descriptors, and returns 
  * the number of file descriptors who must still be started.
  */
-int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
+int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
 {
     int i, j, m, found;
 
@@ -92,7 +91,7 @@ int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton 
                     sockets[j].accept_fd = accept(sockets[j].listen_fd, NULL, NULL);
                     sockets[j].started = 1;
                     close(sockets[j].listen_fd);
-                    PRINT_MSG("Started socket %d.\n", j);
+                    DEBUG_PRINT("Started socket %d.\n", j);
                 }
             }
             --fds_left;
@@ -100,3 +99,50 @@ int acceptConnections(struct pollfd *fds, int fds_left, struct socket_singleton 
     }
     return fds_left;
 }
+
+/************************************************************
+* Socket read and write functions
+************************************************************/
+
+void recv_complete(const int fd, char *buf, const size_t count)
+{
+    if(0 >= count) {
+        ERROR("recv_complete: can't read %d bytes\n", count);
+    }
+
+    size_t n = 0, r;
+
+    while(n < count) {
+
+        r = recv(fd, buf+n, count - n, 0);
+        if(0 > r) {
+            ERROR("recv_complete: recv failed\n");
+        }
+        else if(0 == r) {
+            ERROR("recv_complete: socket %d closed\n", fd);
+        }
+        n += r;
+    }
+
+}
+
+void send_complete(const int fd, const char * const buf, size_t const count)
+{
+    if(0 >= count) {
+        ERROR("send_complete: can't send %d bytes\n", count);
+    }
+
+    size_t n = 0, s;
+
+    while(n < count) {
+        s = send(fd, buf+n, count - n, 0);
+        if(0 >= s) {
+            ERROR("send_complete: send failed\n");
+        }
+        else if(0 == s) {
+            ERROR("send_complete: socket %d closed\n", fd);
+        }
+        n += s;
+    }
+}
+

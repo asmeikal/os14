@@ -35,8 +35,9 @@ typedef enum commands {
 * Function declaration
 ************************************************************/
 
-Commands get_CMDS_num_from_name(char *name);
-Measures get_MEAS_num_from_name(char *name);
-
+Commands get_CMDS_num_from_name(const char * const name);
+Measures get_MEAS_num_from_name(const char * const name);
+const char * const get_CMDS_name_from_num(const Commands c);
+const char * const get_MEAS_name_from_num(const Measures c);
 
 #endif
