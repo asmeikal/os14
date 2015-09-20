@@ -118,6 +118,9 @@ void recv_complete(const int fd, char *buf, const size_t count)
         if(0 > r) {
             ERROR("recv_complete: recv failed\n");
         }
+        else if(0 == r) {
+            ERROR("recv_complete: socket %d closed\n", fd);
+        }
         n += r;
     }
 
@@ -135,6 +138,9 @@ void send_complete(const int fd, const char * const buf, size_t const count)
         s = send(fd, buf+n, count - n, 0);
         if(0 >= s) {
             ERROR("send_complete: send failed\n");
+        }
+        else if(0 == s) {
+            ERROR("send_complete: socket %d closed\n", fd);
         }
         n += s;
     }

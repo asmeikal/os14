@@ -46,7 +46,7 @@ endif
 
 CC = gcc
 CFLAGS_PROD = -DNDEBUG
-CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused -DNO_PHEV $(INCLUDE)
+CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused $(INCLUDE)
 
 # # # # # # # # # #
 # main directives #

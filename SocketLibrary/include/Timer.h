@@ -8,6 +8,6 @@
 int data_available(const int fd_source);
 int wait_for_answer(const int fd_source);
 void reset_timer(void);
-void setup_timer(const unsigned long answer_timeout_sec, const unsigned long data_avail_timeout_sec);
+void setup_timer(const unsigned int param_simulation_speed, const unsigned int param_queries_per_int);
 
 #endif

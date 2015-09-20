@@ -446,7 +446,7 @@ static void GB_printBufferDouble(GBuffer b)
             DEBUG_PRINT("[%d]: (empty)\n", i);
         }
         else {
-            DEBUG_PRINT("[%d]: %f%s\n", i, b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
+            DEBUG_PRINT("[%d]: %.8e%s\n", i, b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
         }
     }
     DEBUG_PRINT("================================\n\n");
@@ -486,7 +486,7 @@ static void GB_printBufferDoubleDecorated(GBuffer b, PrintFunction f)
             DEBUG_PRINT("\"%s\": (empty)\n", f(i));
         }
         else {
-            DEBUG_PRINT("\"%s\": %f%s\n", f(i), b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
+            DEBUG_PRINT("\"%s\": %.8e%s\n", f(i), b->head[i].value.double_value, (b->head[i].status == BUFFER_STATUS_DELIVERED) ? " (delivered)" : "");
         }
     }
     DEBUG_PRINT("================================\n\n");
