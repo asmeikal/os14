@@ -29,11 +29,16 @@ BEGIN {
             phev_chargeRate = $6;
             phev_hours = $7;
         }
+        # discontinuity: car arrives now
+        # so at current time we get from 0 to current values
         if (!missing_phev && missing_phev_last) {
             print time "\t" $3 "\t" $4 "\t" 0 "\t" 0 "\t" 0;
         }
+        # discontinuity: car leaves now
+        # so at current time we get from old values to 0
+        # phev_charge should be something else, but I don't have enough info
         if(missing_phev && !missing_phev_last) {
-            print time  "\t" $3 "\t" $4 "\t" 0 "\t" phev_chargeRate_last "\t" 0;
+            print time  "\t" $3 "\t" $4 "\t" phev_charge_last "\t" phev_chargeRate_last "\t" 0;
         }
         print time  "\t" $3 "\t" $4 "\t" phev_charge "\t" phev_chargeRate "\t" phev_hours;
         missing_phev_last = missing_phev;
