@@ -18,7 +18,7 @@ model TestServer
   equation
     chargeRate_toGrid = if chargeRate >= 0 then chargeRate else chargeRate * dischargeDissipation;
     chargeRate_toLoad = if chargeRate >= 0 then chargeDissipation * chargeRate else chargeRate;
-    der(charge) = chargeRate_toLoad / 60;
+    der(charge) = chargeRate_toLoad / 60.0;
   end Battery;
 
   class PHEV
@@ -37,7 +37,7 @@ model TestServer
   equation
     chargeRate_toGrid = chargeRate;
     chargeRate_toLoad = chargeDissipation * chargeRate;
-    der(charge) = chargeRate_toLoad / 60.0;
+    der(charge) = if present then chargeRate_toLoad / 60.0 else 0;
   end PHEV;
 
   class HouseData
@@ -60,6 +60,7 @@ model TestServer
     PHEV_chargeRate = LUT.y[4];
     PHEV_next_hours = LUT.y[5];
   end HouseData;
+
   function getOM
     input Real o;
     input String n;
@@ -104,23 +105,23 @@ initial algorithm
 equation
   myCar.not_present = HouseSim.PHEV_next_hours == 0.0;
   myCar.present = not HouseSim.PHEV_next_hours == 0.0;
-  when myCar.not_present then
-    reinit(myCar.charge, 0);
-    reinit(myCar.chargeRate, 0);
-  end when;
-  when myCar.present then
-    reinit(myCar.charge, HouseSim.PHEV_charge);
-  end when;
   when {mod(time, step_time) == 0.0} then
     sendOM(pre(energyConsumption), "energy", time);
     sendOM(pre(HouseSim.consumption), "consumption", time);
     sendOM(pre(HouseSim.production), "production", time);
     sendOM(pre(mainBattery.charge), "battery", time);
-    sendOM(if myCar.present then pre(myCar.charge) else -1, "phev", time);
     sendOM(pre(HouseSim.PHEV_next_hours), "phev_ready_hours", time);
-    mainBattery.chargeRate = getOM(pre(mainBattery.chargeRate), "battery", time);
+    sendOM(if myCar.present then pre(myCar.charge) else -1, "phev", time);
     myCar.chargeRate = getOM(pre(myCar.chargeRate), "phev", time);
+    mainBattery.chargeRate = getOM(pre(mainBattery.chargeRate), "battery", time);
+  end when;
+  when myCar.not_present then
+    reinit(myCar.charge, 0);
+    //reinit(myCar.chargeRate, 0);
+  end when;
+  when myCar.present then
+    reinit(myCar.charge, HouseSim.PHEV_charge);
   end when;
   energyConsumption = HouseSim.consumption - HouseSim.production + mainBattery.chargeRate_toGrid + myCar.chargeRate_toGrid;
-  annotation(experiment(StartTime = 0, StopTime = 26800, Tolerance = 1e-06, Interval = 1));
+  annotation(experiment(StartTime = 0, StopTime = 128100, Tolerance = 1e-06, Interval = 1));
 end TestServer;
