@@ -167,7 +167,7 @@ double sendOM(const double val, const char * const name, const double t, const l
 
 /**
  * Returns the [name] variable received from CMDS socket. If the
- * [name] variable has already been taken, throws an error. If the 
+ * [name] variable has already been taken, throws an error. If the
  * CMDS buffer is empty, loads data from the socket.
  */
 double getOM(const double val, const char * const name, const double t, const long int ctrl)
@@ -411,7 +411,7 @@ static void send_meas(const char * const name, const double value, const long in
 * Local buffer utilities
 ************************************************************/
 
-static int server_is_running(void) 
+static int server_is_running(void)
 {
 	return (0 < sockets[SOCKET_CMDS].accept_fd) && (0 < sockets[SOCKET_MEAS].accept_fd);
 }

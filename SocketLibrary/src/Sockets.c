@@ -16,40 +16,40 @@
 
 /**
  * Creates a socket listening on the given port for a maximum of max_con
- * connections. The socket is a TCP reusable socket, listening on any 
+ * connections. The socket is a TCP reusable socket, listening on any
  * address.
  * Return value is non-negative on success, negative on failure.
  */
 int socketBuilder(const unsigned short port, const unsigned int max_con)
 {
-    int errors = 0, result = 0, yes = 1;
-    struct sockaddr_in addr = {0};
+	int errors = 0, result = 0, yes = 1;
+	struct sockaddr_in addr = {0};
 
-    /* Create socket. */
-    if (0 > (result = socket(PF_INET, SOCK_STREAM, 0))) {
-        return result;
-    }
+	/* Create socket. */
+	if (0 > (result = socket(PF_INET, SOCK_STREAM, 0))) {
+		return result;
+	}
 
-    /* Make the socket port reusable. */
-    if(0 > (errors = setsockopt(result, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))) {
-        return errors;
-    }
+	/* Make the socket port reusable. */
+	if(0 > (errors = setsockopt(result, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)))) {
+		return errors;
+	}
 
-    /* Load up structures and bind socket. */
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(port);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	/* Load up structures and bind socket. */
+	addr.sin_family	  = AF_INET;
+	addr.sin_port		= htons(port);
+	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if(0 > (errors = bind(result, (struct sockaddr*) &addr, sizeof addr))) {
-        return errors;
-    }
+	if(0 > (errors = bind(result, (struct sockaddr*) &addr, sizeof addr))) {
+		return errors;
+	}
 
-    /* Start listening. */
-    if(0 > (errors = listen(result, max_con))) {
-        return errors;
-    }
+	/* Start listening. */
+	if(0 > (errors = listen(result, max_con))) {
+		return errors;
+	}
 
-    return result;
+	return result;
 }
 
 /**
@@ -58,46 +58,46 @@ int socketBuilder(const unsigned short port, const unsigned int max_con)
  */
 void buildPoll(struct pollfd *fds, const int fds_left, struct socket_singleton *sockets)
 {
-    if(0 >= fds_left) return;
+	if(0 >= fds_left) return;
 
-    int i;
+	int i;
 
-    for(i = 0; i < fds_left; ++i, ++sockets) {
-        while(0 != sockets->started) {
-            ++sockets;
-        }
-        fds[i].events = POLLIN;
-        fds[i].fd = sockets->listen_fd;
-    }
+	for(i = 0; i < fds_left; ++i, ++sockets) {
+		while(0 != sockets->started) {
+			++sockets;
+		}
+		fds[i].events = POLLIN;
+		fds[i].fd = sockets->listen_fd;
+	}
 
 }
 
 /**
- * Accepts a connection from all ready file descriptors, and returns 
+ * Accepts a connection from all ready file descriptors, and returns
  * the number of file descriptors who must still be started.
  */
 int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_singleton *sockets)
 {
-    int i, j, m, found;
+	int i, j, m, found;
 
-    m = fds_left;
+	m = fds_left;
 
-    for(i = 0; i < m; ++i) {
-        if(fds[i].revents & POLLIN) {
-            found = 0;
-            for(j = 0; (j < SOCKET_NUMBER) && (0 == found); ++j) {
-                if(sockets[j].listen_fd == fds[i].fd) {
-                    found = 1;
-                    sockets[j].accept_fd = accept(sockets[j].listen_fd, NULL, NULL);
-                    sockets[j].started = 1;
-                    close(sockets[j].listen_fd);
-                    DEBUG_PRINT("Started socket %d.\n", j);
-                }
-            }
-            --fds_left;
-        }
-    }
-    return fds_left;
+	for(i = 0; i < m; ++i) {
+		if(fds[i].revents & POLLIN) {
+			found = 0;
+			for(j = 0; (j < SOCKET_NUMBER) && (0 == found); ++j) {
+				if(sockets[j].listen_fd == fds[i].fd) {
+					found = 1;
+					sockets[j].accept_fd = accept(sockets[j].listen_fd, NULL, NULL);
+					sockets[j].started = 1;
+					close(sockets[j].listen_fd);
+					DEBUG_PRINT("Started socket %d.\n", j);
+				}
+			}
+			--fds_left;
+		}
+	}
+	return fds_left;
 }
 
 /************************************************************
@@ -106,47 +106,47 @@ int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_sing
 
 void recv_complete(struct socket_singleton *socket, char *buf, const size_t count)
 {
-    if(0 >= count) {
-        ERROR("recv_complete: can't read %zd bytes\n", count);
-    }
+	if(0 >= count) {
+		ERROR("recv_complete: can't read %zd bytes\n", count);
+	}
 
-    size_t n = 0, r;
+	size_t n = 0, r;
 
-    while(n < count) {
+	while(n < count) {
 
-        r = recv(socket->accept_fd, buf+n, count - n, 0);
-        if(0 > r) {
-            ERROR("recv_complete: recv failed\n");
-        }
-        else if(0 == r) {
-            WARNING("recv_complete: socket %d closed\n", socket->accept_fd);
-	    socket->accept_fd = 0;
-	    socket->started = 0;
-        }
-        n += r;
-    }
+		r = recv(socket->accept_fd, buf+n, count - n, 0);
+		if(0 > r) {
+			ERROR("recv_complete: recv failed\n");
+		}
+		else if(0 == r) {
+			WARNING("recv_complete: socket %d closed\n", socket->accept_fd);
+		socket->accept_fd = 0;
+		socket->started = 0;
+		}
+		n += r;
+	}
 
 }
 
 void send_complete(struct socket_singleton *socket, const char * const buf, size_t const count)
 {
-    if(0 >= count) {
-        ERROR("send_complete: can't send %zd bytes\n", count);
-    }
+	if(0 >= count) {
+		ERROR("send_complete: can't send %zd bytes\n", count);
+	}
 
-    size_t n = 0, s;
+	size_t n = 0, s;
 
-    while(n < count) {
-        s = send(socket->accept_fd, buf+n, count - n, 0);
-        if(0 >= s) {
-            ERROR("send_complete: send failed\n");
-        }
-        else if(0 == s) {
-            WARNING("send_complete: socket %d closed\n", socket->accept_fd);
-	    socket->accept_fd = 0;
-	    socket->started = 0;
-        }
-        n += s;
-    }
+	while(n < count) {
+		s = send(socket->accept_fd, buf+n, count - n, 0);
+		if(0 >= s) {
+			ERROR("send_complete: send failed\n");
+		}
+		else if(0 == s) {
+			WARNING("send_complete: socket %d closed\n", socket->accept_fd);
+		socket->accept_fd = 0;
+		socket->started = 0;
+		}
+		n += s;
+	}
 }
 

@@ -95,7 +95,7 @@ all: $(LIB)
 tests: all
 tests: $(TEST_BINS)
 
-clean: 
+clean:
 	rm -rf $(MODELICA)/lib$(LIB_NAME).a $(MODELICA)/lib$(LIB_NAME).h
 	rm -rf $(LIB_DIR)
 	rm -rf $(BIN_DIR)

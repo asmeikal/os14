@@ -119,7 +119,7 @@ int GB_destroy(GBuffer b)
 	free(b->head);
 
 	free(b);
-	
+
 	return _GB_SUCCESS;
 }
 
@@ -128,8 +128,8 @@ int GB_destroy(GBuffer b)
 ************************************************************/
 
 /**
- * Gets the double value at index [i]. Throws an error if 
- * the value is not set, the buffer is not a double buffer, 
+ * Gets the double value at index [i]. Throws an error if
+ * the value is not set, the buffer is not a double buffer,
  * or the index is out of range.
  */
 int GB_getValue(GBuffer b, const int i, const void *ret)
@@ -164,8 +164,8 @@ int GB_getValue(GBuffer b, const int i, const void *ret)
 }
 
 ///**
-// * Gets the long int value at index [i]. Throws an error if 
-// * the value is not set, the buffer is not a long int buffer, 
+// * Gets the long int value at index [i]. Throws an error if
+// * the value is not set, the buffer is not a long int buffer,
 // * or the index is out of range.
 // */
 //long int GB_getLongIntValue(GBuffer b, const int i)
@@ -194,7 +194,7 @@ int GB_getValue(GBuffer b, const int i, const void *ret)
 ************************************************************/
 
 /**
- * Sets the double value at index [i] to [v]. Throws an error if 
+ * Sets the double value at index [i] to [v]. Throws an error if
  * the buffer is not a double buffer or the index is out of range.
  * Gives a warning if the index was not empty.
  */
@@ -232,7 +232,7 @@ int GB_setValue(GBuffer b, const int i, const void * const  val)
 }
 
 /**
- * Sets the long int value at index [i] to [v]. Throws an error if 
+ * Sets the long int value at index [i] to [v]. Throws an error if
  * the buffer is not a long int buffer or the index is out of range.
  * Gives a warning if the index was not empty.
  */
@@ -283,7 +283,7 @@ int GB_empty(GBuffer b)
 ************************************************************/
 
 /**
- * Marks the index [i] as set. Gives a warning if the index was 
+ * Marks the index [i] as set. Gives a warning if the index was
  * already set.
  */
 int GB_set(GBuffer b, const int i)
@@ -306,7 +306,7 @@ int GB_set(GBuffer b, const int i)
 }
 
 /**
- * Marks the index [i] as empty. Gives a warning if the index was 
+ * Marks the index [i] as empty. Gives a warning if the index was
  * already empty.
  */
 int GB_unset(GBuffer b, const int i)
@@ -329,7 +329,7 @@ int GB_unset(GBuffer b, const int i)
 }
 
 /**
- * Marks the index [i] as delivered. Gives a warning if the index was 
+ * Marks the index [i] as delivered. Gives a warning if the index was
  * empty or already delivered.
  */
 int GB_markAsDelivered(GBuffer b, const int i)
@@ -376,7 +376,7 @@ int GB_isSet(GBuffer b, const int i)
 }
 
 /**
- * Returns 0 if the index [i] is not marked as delivered, 
+ * Returns 0 if the index [i] is not marked as delivered,
  * non-zero otherwise.
  */
 int GB_isDelivered(GBuffer b, const int i)
@@ -460,7 +460,7 @@ int GB_isAllDelivered(GBuffer b)
 static const char * const itoa(const int d)
 {
 	static char tmp[16];
-	
+
 	snprintf(tmp, 16, "%d", d);
 
 	return tmp;
@@ -618,7 +618,7 @@ int GB_print(GBuffer b, PrintFunction f)
 
 static int GB_check(GBuffer b, const char * const fname)
 {
-	
+
 	if((NULL == b) || (NULL == b->head)) {
 		DEBUG_PRINT("%s: NULL pointer argument.\n", fname);
 		return _GB_INVALID;

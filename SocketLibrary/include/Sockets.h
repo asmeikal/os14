@@ -9,9 +9,9 @@
 ************************************************************/
 
 struct socket_singleton {
-    int listen_fd;
-    int accept_fd;
-    int started;
+	int listen_fd;
+	int accept_fd;
+	int started;
 };
 
 /************************************************************

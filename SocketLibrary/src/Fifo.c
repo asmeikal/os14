@@ -74,7 +74,7 @@ void fifo_destroy(FIFO f)
 }
 
 /**
- * Inserts an element in the FIFO. 
+ * Inserts an element in the FIFO.
  * Returns 0 on success, non zero on failure.
  */
 int fifo_insert(FIFO f, void *item)
@@ -88,7 +88,7 @@ int fifo_insert(FIFO f, void *item)
 		DEBUG_PRINT("fifo_insert: calloc failed.\n");
 		return _FIFO_FAILED;
 	}
-	
+
 	new->item = item;
 	new->next = NULL;
 
@@ -96,7 +96,7 @@ int fifo_insert(FIFO f, void *item)
 		f->first = new;
 		return _FIFO_SUCCESS;
 	}
-	
+
 	struct _fifoNode *last = f->first;
 	while(NULL != last->next) {
 		last = last->next;
@@ -147,7 +147,7 @@ void *fifo_pop(FIFO f)
 }
 
 /**
- * Prints the contents of the FIFO, using the printFunction 
+ * Prints the contents of the FIFO, using the printFunction
  * callback.
  */
 void fifo_print(FIFO f, void (*printFunction)(void *))

@@ -11,7 +11,7 @@ void myPrint(void *obj)
 
 int main(void)
 {
-	
+
 	FIFO f = fifo_init();
 	assert(NULL != f);
 

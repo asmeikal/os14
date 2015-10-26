@@ -12,27 +12,27 @@
 void OPEN_DEBUG(const char * const fname);
 
 #define ERROR(...) \
-            do { \
+			do { \
 		fprintf(stderr, "[%s:%d] ", __FILE__, __LINE__); \
-                fprintf(stderr, "ERROR: "); \
-                WARNING(__VA_ARGS__); \
-                raise(SIGINT); \
-                exit(1); \
-            } while(0)
+				fprintf(stderr, "ERROR: "); \
+				WARNING(__VA_ARGS__); \
+				raise(SIGINT); \
+				exit(1); \
+			} while(0)
 
 #define WARNING(...) \
-            do { \
-                fprintf(stderr, __VA_ARGS__); \
-            } while(0)
+			do { \
+				fprintf(stderr, __VA_ARGS__); \
+			} while(0)
 
 #ifndef NDEBUG
-    #define DEBUG_PRINT(...) \
-            do { \
-                WARNING(__VA_ARGS__); \
-            } while(0)
+	#define DEBUG_PRINT(...) \
+			do { \
+				WARNING(__VA_ARGS__); \
+			} while(0)
 #else
-    #define DEBUG_PRINT(...) \
-            do {;} while(0)
+	#define DEBUG_PRINT(...) \
+			do {;} while(0)
 #endif
 
 

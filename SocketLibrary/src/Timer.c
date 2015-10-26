@@ -57,7 +57,7 @@ Timer create_timer(const unsigned int speed, const unsigned int queries_per_int)
 }
 
 /**
- * Returns 0 if no data can be read from [fd_source], non-zero 
+ * Returns 0 if no data can be read from [fd_source], non-zero
  * otherwise. Waits up to [NORMAL_TIME_WAIT] seconds for data
  * to become available.
  */
@@ -167,8 +167,8 @@ static unsigned long long remaining_time_millis(const Timer t, const int step)
 	}
 
 	unsigned long long time_left = 0,
-		      max_time = t->timestamp.tv_sec * 1000ULL + (((1000ULL * step * DEFAULT_TIMEOUT) / t->queries_per_int)/ t->speed) + t->timestamp.tv_usec / 1000ULL,
-		      now_time = now.tv_sec * 1000ULL + now.tv_usec / 1000ULL;
+			  max_time = t->timestamp.tv_sec * 1000ULL + (((1000ULL * step * DEFAULT_TIMEOUT) / t->queries_per_int)/ t->speed) + t->timestamp.tv_usec / 1000ULL,
+			  now_time = now.tv_sec * 1000ULL + now.tv_usec / 1000ULL;
 	if(max_time > now_time) {
 		time_left = max_time - now_time;
 	}

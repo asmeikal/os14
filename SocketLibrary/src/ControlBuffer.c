@@ -24,7 +24,7 @@ ControlBuffer CB_init(const int size)
 		DEBUG_PRINT("CB_init: illegal size %d.\n", size);
 		return NULL;
 	}
-	
+
 	struct control_buffer *ret = calloc(1, sizeof(*ret));
 	if (NULL == ret) {
 		DEBUG_PRINT("CB_init: calloc failed.\n");
