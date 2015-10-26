@@ -14,7 +14,7 @@ void OPEN_DEBUG(const char * const fname)
         ERROR("OPEN_DEBUG: NULL pointer argument.\n");
     }
 
-    char *full_fname = (char *) malloc(strlen(fname) + 32);
+    char *full_fname = (char *) malloc(strlen(fname) + 64);
     if(NULL == full_fname) {
         ERROR("OPEN_DEBUG: failed malloc.\n");
     }

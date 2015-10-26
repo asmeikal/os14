@@ -13,6 +13,7 @@ void OPEN_DEBUG(const char * const fname);
 
 #define ERROR(...) \
             do { \
+		fprintf(stderr, "[%s:%d] ", __FILE__, __LINE__); \
                 fprintf(stderr, "ERROR: "); \
                 WARNING(__VA_ARGS__); \
                 raise(SIGINT); \

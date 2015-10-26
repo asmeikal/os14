@@ -62,28 +62,29 @@ model TestServer
   end HouseData;
 
   function getOM
-    input Real o;
-    input String n;
-    input Real t;
-    output Real y;
+    input Real old_value;
+    input String name;
+    input Real time;
+    input Integer control;
+    output Real result;
   
     external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end getOM;
 
   function sendOM
-    input Real x;
-    input String n;
-    input Real t;
-    output Real y;
+    input Real value;
+    input String name;
+    input Real time;
+    input Integer control;
+    output Real result;
   
     external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end sendOM;
 
   function startServers
-    input Real t;
-    input Real sr;
-    input Integer ss;
-    input Integer st;
+    input Real time;
+    input Integer sec_per_step;
+    input Integer sec_per_time_int;
   
     external "C"  annotation(Library = "libSocketsModelica.a", Include = "#include \"libSocketsModelica.h\"");
   end startServers;
@@ -94,27 +95,33 @@ protected
   parameter Integer queries_per_int = 60;
   parameter Integer speed = 1;
   parameter Real step_time = comms_time_int / queries_per_int;
+  Integer control(start = 0);
 initial algorithm
-  startServers(time, comms_time_int, queries_per_int, speed);
-  sendOM(pre(energyConsumption), "energy", time);
-  sendOM(pre(HouseSim.consumption), "consumption", time);
-  sendOM(pre(HouseSim.production), "production", time);
-  sendOM(pre(mainBattery.charge), "battery", time);
-  sendOM(pre(myCar.charge), "phev", time);
-  sendOM(pre(HouseSim.PHEV_next_hours), "phev_ready_hours", time);
-equation
-  myCar.not_present = HouseSim.PHEV_next_hours == 0.0;
-  myCar.present = not HouseSim.PHEV_next_hours == 0.0;
-  when {mod(time, step_time) == 0.0} then
-    sendOM(pre(energyConsumption), "energy", time);
-    sendOM(pre(HouseSim.consumption), "consumption", time);
-    sendOM(pre(HouseSim.production), "production", time);
-    sendOM(pre(mainBattery.charge), "battery", time);
-    sendOM(pre(HouseSim.PHEV_next_hours), "phev_ready_hours", time);
-    sendOM(if myCar.present then pre(myCar.charge) else -1, "phev", time);
-    myCar.chargeRate = getOM(pre(myCar.chargeRate), "phev", time);
-    mainBattery.chargeRate = getOM(pre(mainBattery.chargeRate), "battery", time);
+  control := control + 1;
+  startServers(time, queries_per_int, speed);
+  sendOM(pre(energyConsumption), "energy", time, control);
+  sendOM(pre(HouseSim.consumption), "consumption", time, control);
+  sendOM(pre(HouseSim.production), "production", time, control);
+  sendOM(pre(mainBattery.charge), "battery", time, control);
+  sendOM(pre(myCar.charge), "phev", time, control);
+  sendOM(pre(HouseSim.PHEV_next_hours), "phev_ready_hours", time, control);
+algorithm
+  myCar.not_present := HouseSim.PHEV_next_hours == 0.0;
+  myCar.present := not HouseSim.PHEV_next_hours == 0.0;
+  when {mod(time, comms_time_int) == 0.0} then
+    control := control + 1;
+    sendOM(pre(energyConsumption), "energy", time, control);
+    sendOM(pre(HouseSim.consumption), "consumption", time, control);
+    sendOM(pre(HouseSim.production), "production", time, control);
+    sendOM(pre(mainBattery.charge), "battery", time, control);
+    sendOM(pre(HouseSim.PHEV_next_hours), "phev_ready_hours", time, control);
+    sendOM(if myCar.present then pre(myCar.charge) else -1, "phev", time, control);
   end when;
+  when {mod(time, step_time) == 0.0} then
+    myCar.chargeRate := getOM(pre(myCar.chargeRate), "phev", time, control);
+    mainBattery.chargeRate := getOM(pre(mainBattery.chargeRate), "battery", time, control);
+  end when;
+equation
   when myCar.not_present then
     reinit(myCar.charge, 0);
     //reinit(myCar.chargeRate, 0);

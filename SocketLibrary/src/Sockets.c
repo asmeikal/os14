@@ -104,43 +104,47 @@ int acceptConnections(const struct pollfd *fds, int fds_left, struct socket_sing
 * Socket read and write functions
 ************************************************************/
 
-void recv_complete(const int fd, char *buf, const size_t count)
+void recv_complete(struct socket_singleton *socket, char *buf, const size_t count)
 {
     if(0 >= count) {
-        ERROR("recv_complete: can't read %d bytes\n", count);
+        ERROR("recv_complete: can't read %zd bytes\n", count);
     }
 
     size_t n = 0, r;
 
     while(n < count) {
 
-        r = recv(fd, buf+n, count - n, 0);
+        r = recv(socket->accept_fd, buf+n, count - n, 0);
         if(0 > r) {
             ERROR("recv_complete: recv failed\n");
         }
         else if(0 == r) {
-            ERROR("recv_complete: socket %d closed\n", fd);
+            WARNING("recv_complete: socket %d closed\n", socket->accept_fd);
+	    socket->accept_fd = 0;
+	    socket->started = 0;
         }
         n += r;
     }
 
 }
 
-void send_complete(const int fd, const char * const buf, size_t const count)
+void send_complete(struct socket_singleton *socket, const char * const buf, size_t const count)
 {
     if(0 >= count) {
-        ERROR("send_complete: can't send %d bytes\n", count);
+        ERROR("send_complete: can't send %zd bytes\n", count);
     }
 
     size_t n = 0, s;
 
     while(n < count) {
-        s = send(fd, buf+n, count - n, 0);
+        s = send(socket->accept_fd, buf+n, count - n, 0);
         if(0 >= s) {
             ERROR("send_complete: send failed\n");
         }
         else if(0 == s) {
-            ERROR("send_complete: socket %d closed\n", fd);
+            WARNING("send_complete: socket %d closed\n", socket->accept_fd);
+	    socket->accept_fd = 0;
+	    socket->started = 0;
         }
         n += s;
     }

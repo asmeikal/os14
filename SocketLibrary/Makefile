@@ -14,12 +14,14 @@ HEADERS = $(HDR_DIR)/*.h
 INCLUDE = -I. -I$(HDR_DIR)
 
 # objects
-OBJ_LIBS = $(OBJ_DIR)/libSocketsModelica.o \
-			$(OBJ_DIR)/Sockets.o \
+OBJ_LIBS =	$(OBJ_DIR)/Sockets.o \
 			$(OBJ_DIR)/House.o \
-			$(OBJ_DIR)/Buffers.o \
-            $(OBJ_DIR)/Debug.o \
-			$(OBJ_DIR)/Timer.o
+			$(OBJ_DIR)/GeneralBuffer.o \
+			$(OBJ_DIR)/ControlBuffer.o \
+			$(OBJ_DIR)/Debug.o \
+			$(OBJ_DIR)/Timer.o \
+			$(OBJ_DIR)/libSocketsModelica.o \
+			$(OBJ_DIR)/Fifo.o
 
 # library
 LIB_DIR = $(BASE_DIR)/lib
@@ -32,10 +34,14 @@ TEST_DIR_SRC = $(SRC_DIR)/test
 TEST_DIR_OBJ = $(OBJ_DIR)/test
 TEST_DIR_BIN = $(BIN_DIR)/test
 
-TEST_OBJS = $(TEST_DIR_OBJ)/test_libSocketsModelica.o \
-			$(TEST_DIR_OBJ)/test_buffers.o
-TEST_BINS = $(TEST_DIR_BIN)/test_libSocketsModelica \
-			$(TEST_DIR_BIN)/test_buffers
+TEST_OBJS = $(TEST_DIR_OBJ)/test_GeneralBuffer.o \
+			$(TEST_DIR_OBJ)/test_Fifo.o \
+			$(TEST_DIR_OBJ)/test_ControlBuffer.o \
+			$(TEST_DIR_OBJ)/test_timer.o
+TEST_BINS = $(TEST_DIR_BIN)/test_GeneralBuffer \
+			$(TEST_DIR_BIN)/test_Fifo \
+			$(TEST_DIR_BIN)/test_ControlBuffer \
+			$(TEST_DIR_BIN)/test_timer
 
 # compiler and flags
 STD = --std=c99
@@ -46,7 +52,7 @@ endif
 
 CC = gcc
 CFLAGS_PROD = -DNDEBUG
-CFLAGS = $(STD) --pedantic --pedantic-errors -Wall -Wno-unused $(INCLUDE)
+CFLAGS = $(STD) --pedantic --pedantic-errors -Werror -Wall -Wno-unused $(INCLUDE)
 
 # # # # # # # # # #
 # main directives #

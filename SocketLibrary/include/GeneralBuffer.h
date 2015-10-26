@@ -1,7 +1,7 @@
 #ifndef __BUFFER_H
 #define __BUFFER_H
 
-typedef struct buffer_general *GBuffer;
+typedef struct _GB_head *GBuffer;
 
 typedef const char * const (*PrintFunction)(const int);
 
@@ -12,22 +12,21 @@ typedef const char * const (*PrintFunction)(const int);
 /* Initializers */
 GBuffer GB_initDouble(const int size);
 GBuffer GB_initLongInt(const int size);
+int GB_destroy(GBuffer b);
 
-/* Getters */
-double GB_getDoubleValue(GBuffer b, const int i);
-long int GB_getLongIntValue(GBuffer b, const int i);
+/* Getter */
+int GB_getValue(GBuffer b, const int i, const void *res);
 
-/* Setters */
-void GB_setDoubleValue(GBuffer b, const int i, const double v);
-void GB_setLongIntValue(GBuffer b, const int i, const long int v);
+/* Setter */
+int GB_setValue(GBuffer b, const int i, const void * const val);
 
 /* Status setters */
-void GB_set(GBuffer b, const int i);
-void GB_unset(GBuffer b, const int i);
-void GB_markAsDelivered(GBuffer b, const int i);
+int GB_set(GBuffer b, const int i);
+int GB_unset(GBuffer b, const int i);
+int GB_markAsDelivered(GBuffer b, const int i);
 
 /* Buffer empty utility */
-void GB_empty(GBuffer b);
+int GB_empty(GBuffer b);
 
 /* Single index checker */
 int GB_isSet(GBuffer b, const int i);
@@ -38,8 +37,7 @@ int GB_isFull(GBuffer b);
 int GB_isEmpty(GBuffer b);
 int GB_isAllDelivered(GBuffer b);
 
-/* Printers */
-void GB_print(GBuffer b);
-void GB_printDecorated(GBuffer b, PrintFunction f);
+/* Printer */
+int GB_print(GBuffer b, PrintFunction f);
 
 #endif
