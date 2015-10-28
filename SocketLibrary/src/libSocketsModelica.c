@@ -52,17 +52,17 @@ static void print_CMDS_buffer(void);
 * Local variables
 ************************************************************/
 
-long int current_hour;
-CommsStatus communication_status;
+static long int current_hour;
+static CommsStatus communication_status;
 
-ControlBuffer meas_buffer;
-ControlBuffer cmds_buffer;
+static ControlBuffer meas_buffer;
+static ControlBuffer cmds_buffer;
 
-Timer comms_timer;
+static Timer comms_timer;
 
-FIFO out_meas_buffer;
+static FIFO out_meas_buffer;
 
-struct socket_singleton sockets[SOCKET_NUMBER] = {{0}};
+static struct socket_singleton sockets[SOCKET_NUMBER] = {{0}};
 
 /************************************************************
 * Function definition
