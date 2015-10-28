@@ -16,7 +16,7 @@ struct socket_singleton {
 
 /************************************************************
 * Function declaration
-****************************size_t********************************/
+************************************************************/
 
 int socketBuilder(const unsigned short port, const unsigned int max_con);
 void buildPoll(struct pollfd *fds, const int fds_left, struct socket_singleton *sockets);
