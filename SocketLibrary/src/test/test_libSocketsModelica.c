@@ -26,11 +26,11 @@ double values[19][4] = {
 
 int main(void)
 {
-	long int control = 1;
+	int32_t control = 1;
 	int i;
 	double t = 0.0;
 
-	long int recv_ctrl = 0;
+	int32_t recv_ctrl = 0;
 	double recv_battery = 0.0;
 
 	startServers(t);

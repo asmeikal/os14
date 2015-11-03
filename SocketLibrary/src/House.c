@@ -17,27 +17,27 @@ Measures get_MEAS_num_from_name(const char * const name)
 	}
 
 	if((strlen(name) == strlen("energy")) &&
-	   (0 == (strncmp(name, "energy", strlen("energy"))))) {
+		(0 == (strncmp(name, "energy", strlen("energy"))))) {
 		return MEAS_ENERGY;
 	}
 	else if((strlen(name) == strlen("consumption")) &&
-	   (0 == (strncmp(name, "consumption", strlen("consumption"))))) {
+		(0 == (strncmp(name, "consumption", strlen("consumption"))))) {
 		return MEAS_CONSUMPTION;
 	}
 	else if((strlen(name) == strlen("production")) &&
-	   (0 == (strncmp(name, "production", strlen("production"))))) {
+		(0 == (strncmp(name, "production", strlen("production"))))) {
 		return MEAS_PRODUCTION;
 	}
 	else if((strlen(name) == strlen("battery")) &&
-	   (0 == (strncmp(name, "battery", strlen("battery"))))) {
+		(0 == (strncmp(name, "battery", strlen("battery"))))) {
 		return MEAS_BATTERY;
 	}
 	else if((strlen(name) == strlen("phev")) &&
-	   (0 == (strncmp(name, "phev", strlen("phev"))))) {
+		(0 == (strncmp(name, "phev", strlen("phev"))))) {
 		return MEAS_PHEV;
 	}
 	else if((strlen(name) == strlen("phev_ready_hours")) &&
-	   (0 == (strncmp(name, "phev_ready_hours", strlen("phev_ready_hours"))))) {
+		(0 == (strncmp(name, "phev_ready_hours", strlen("phev_ready_hours"))))) {
 		return MEAS_PHEV_READY_HOURS;
 	}
 	else {
@@ -52,11 +52,11 @@ Commands get_CMDS_num_from_name(const char * const name)
 	}
 
 	if((strlen(name) == strlen("battery")) &&
-	   (0 == (strncmp(name, "battery", strlen("battery"))))) {
+	(0 == (strncmp(name, "battery", strlen("battery"))))) {
 		return CMDS_BATTERY;
 	}
 	else if((strlen(name) == strlen("phev")) &&
-	   (0 == (strncmp(name, "phev", strlen("phev"))))) {
+	(0 == (strncmp(name, "phev", strlen("phev"))))) {
 		return CMDS_PHEV;
 	}
 	else {

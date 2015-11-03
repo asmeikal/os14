@@ -12,7 +12,7 @@ enum _CB_return_values {
 };
 
 struct control_buffer {
-	long int control;
+	int32_t control;
 	GBuffer buffer;
 };
 
@@ -42,7 +42,7 @@ ControlBuffer CB_init(const int size)
 	return ret;
 }
 
-int CB_getControl(ControlBuffer b, long int *res)
+int CB_getControl(ControlBuffer b, int32_t *res)
 {
 	if (_CB_SUCCESS != CB_check(b, "CB_getControl")) {
 		return -_CB_FAILED;
@@ -58,7 +58,7 @@ int CB_getControl(ControlBuffer b, long int *res)
 	return _CB_SUCCESS;
 }
 
-int CB_setControl(ControlBuffer b, const long int * const val)
+int CB_setControl(ControlBuffer b, const int32_t * const val)
 {
 	if (_CB_SUCCESS != CB_check(b, "CB_getControl")) {
 		return -_CB_FAILED;
@@ -116,7 +116,7 @@ void CB_print(ControlBuffer b)
 		return;
 	}
 
-	DEBUG_PRINT("Control is %ld\n", b->control);
+	DEBUG_PRINT("Control is %d\n", b->control);
 	GB_print(b->buffer, NULL);
 }
 

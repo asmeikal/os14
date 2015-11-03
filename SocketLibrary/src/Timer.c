@@ -34,7 +34,7 @@ struct _timer {
 ************************************************************/
 
 static unsigned long long remaining_time_millis(const Timer t, const int step);
-static int timed_poll(const Timer t, const long int step, const int fd_source, const short events);
+static int timed_poll(const Timer t, const int32_t step, const int fd_source, const short events);
 static int timer_check(Timer t, const char * const fname);
 
 /************************************************************
@@ -61,24 +61,24 @@ Timer create_timer(const unsigned int speed, const unsigned int queries_per_int)
  * otherwise. Waits up to [NORMAL_TIME_WAIT] seconds for data
  * to become available.
  */
-int read_possible(const Timer t, const long int step, const int fd_source)
+int read_possible(const Timer t, const int32_t step, const int fd_source)
 {
 	return timed_poll(t, step, fd_source, POLLIN);
 }
 
-int write_possible(const Timer t, const long int step, const int fd_source)
+int write_possible(const Timer t, const int32_t step, const int fd_source)
 {
 	return timed_poll(t, step, fd_source, POLLOUT);
 }
 
-static int timed_poll(const Timer t, const long int step, const int fd_source, const short events)
+static int timed_poll(const Timer t, const int32_t step, const int fd_source, const short events)
 {
 //	DEBUG_PRINT("timed_poll: checking...\n");
 	if (_TIMER_SUCCESS != timer_check(t, "timed_poll")) {
 		return 0;
 	}
 	if((step < 0) || (step >= t->queries_per_int)) {
-		DEBUG_PRINT("timed_poll: invalid step %ld\n", step);
+		DEBUG_PRINT("timed_poll: invalid step %d\n", step);
 		return 0;
 	}
 	struct pollfd fd_wait = {0};

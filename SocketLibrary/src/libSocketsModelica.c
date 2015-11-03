@@ -34,10 +34,10 @@ typedef enum _comms_status {
 * Local functions declaration
 ************************************************************/
 
-static void send_meas(const char * const name, const double value, const long int ctrl);
-static double get_cmds(const char * const name, const long int ctrl);
+static void send_meas(const char * const name, const double value, const int32_t ctrl);
+static double get_cmds(const char * const name, const int32_t ctrl);
 
-static void advance(const long int ctrl, const int step);
+static void advance(const int32_t ctrl, const int step);
 static int recv_MEAS_ctrl(CommsStatus *status, Timer t, const int step);
 static int send_MEAS_buffer(CommsStatus *status, const int step);
 static int recv_CMDS_ctrl(CommsStatus *status, Timer t, const int step);
@@ -52,7 +52,7 @@ static void print_CMDS_buffer(void);
 * Local variables
 ************************************************************/
 
-static long int current_hour;
+static int32_t current_hour;
 static CommsStatus communication_status;
 
 static ControlBuffer meas_buffer;
@@ -144,7 +144,7 @@ void startServers(const double t, const unsigned long queries_per_int, const uns
  * buffer is full. Throws econnectrror if [name] variable has already been
  * buffered.
  */
-double sendOM(const double val, const char * const name, const double t, const long int ctrl)
+double sendOM(const double val, const char * const name, const double t, const int32_t ctrl)
 {
 //	DEBUG_PRINT("sendOM: called with val: %f, name: %s, t: %f\n", val, name, t);
 	if(!server_is_running()) {
@@ -170,7 +170,7 @@ double sendOM(const double val, const char * const name, const double t, const l
  * [name] variable has already been taken, throws an error. If the
  * CMDS buffer is empty, loads data from the socket.
  */
-double getOM(const double val, const char * const name, const double t, const long int ctrl)
+double getOM(const double val, const char * const name, const double t, const int32_t ctrl)
 {
 //	DEBUG_PRINT("getOM: called with parameters (val: %f, name: \"%s\", t: %f)\n", val, name, t);
 	if(!server_is_running()) {
@@ -193,9 +193,9 @@ double getOM(const double val, const char * const name, const double t, const lo
 * Communication functions
 ************************************************************/
 
-static void advance(const long int ctrl, const int step)
+static void advance(const int32_t ctrl, const int step)
 {
-	while (ctrl <= current_hour) {
+	while (current_hour <= ctrl) {
 		switch(communication_status) {
 		case COMMS_MEAS_WAIT:
 			if (recv_MEAS_ctrl(&communication_status, comms_timer, step)) {
@@ -234,11 +234,11 @@ static int recv_MEAS_ctrl(CommsStatus *status, Timer t, const int step)
 	if (!read_possible(t, step, sockets[SOCKET_MEAS].accept_fd)) {
 		return 1;
 	}
-	long int control_in;
+	int32_t control_in;
 
-	recv_complete(&sockets[SOCKET_MEAS], (char*) &control_in, sizeof (long int));
+	recv_complete(&sockets[SOCKET_MEAS], (char*) &control_in, sizeof (int32_t));
 
-	DEBUG_PRINT("recv_MEAS_ctrl: MEAS control message from server is \"%ld\".\n", control_in);
+	DEBUG_PRINT("recv_MEAS_ctrl: MEAS control message from server is \"%d\".\n", control_in);
 
 	*status = COMMS_MEAS_SEND;
 
@@ -252,7 +252,7 @@ static int send_MEAS_buffer(CommsStatus *status, const int step)
 	}
 
 	ControlBuffer extracted_meas_buffer;
-	long int control_out;
+	int32_t control_out;
 	Measures meas_index;
 	double value;
 
@@ -262,8 +262,8 @@ static int send_MEAS_buffer(CommsStatus *status, const int step)
 	if (CB_getControl(extracted_meas_buffer, &control_out)) {
 		ERROR("advance: unable to extract control from MEAS buffer.\n");
 	}
-	send_complete(&sockets[SOCKET_MEAS], (char *) &control_out, sizeof (long int));
-	DEBUG_PRINT("advance: sent MEAS control message \"%ld\" back.\n", control_out);
+	send_complete(&sockets[SOCKET_MEAS], (char *) &control_out, sizeof (int32_t));
+	DEBUG_PRINT("advance: sent MEAS control message \"%d\" back.\n", control_out);
 	for (meas_index = 0; meas_index < MEAS_NUMBER; ++meas_index) {
 		if (GB_getValue(CB_getBuffer(extracted_meas_buffer), meas_index, &value)) {
 			ERROR("advance: unable to extract MEAS %d from MEAS buffer.\n", meas_index);
@@ -284,10 +284,10 @@ static int recv_CMDS_ctrl(CommsStatus *status, Timer t, const int step)
 	if (!read_possible(t, step, sockets[SOCKET_CMDS].accept_fd)) {
 		return 1;
 	}
-	long int control_in;
+	int32_t control_in;
 
-	recv_complete(&sockets[SOCKET_CMDS], (char *) &control_in, sizeof(long int));
-	DEBUG_PRINT("advance: received CMDS control message \"%ld\".\n", control_in);
+	recv_complete(&sockets[SOCKET_CMDS], (char *) &control_in, sizeof(int32_t));
+	DEBUG_PRINT("advance: received CMDS control message \"%d\".\n", control_in);
 	if (CB_setControl(cmds_buffer, &control_in)) {
 		ERROR("advance: unable to set CMDS control.\n");
 	}
@@ -306,7 +306,7 @@ static int recv_CMDS_buffer(CommsStatus *status, Timer t, const int step)
 	}
 	Commands cmds_index;
 	double value;
-	long int control_out;
+	int32_t control_out;
 
 	for(cmds_index = 0; cmds_index < CMDS_NUMBER; ++cmds_index) {
 		recv_complete(&sockets[SOCKET_CMDS], (char *) &value, sizeof(double));
@@ -315,7 +315,7 @@ static int recv_CMDS_buffer(CommsStatus *status, Timer t, const int step)
 		}
 	}
 	print_CMDS_buffer();
-	send_complete(&sockets[SOCKET_CMDS], (char *) &control_out, sizeof (long int));
+	send_complete(&sockets[SOCKET_CMDS], (char *) &control_out, sizeof (int32_t));
 	DEBUG_PRINT("advance: CMDS ack sent back to server.\n");
 	*status = COMMS_MEAS_WAIT;
 
@@ -326,7 +326,7 @@ static int recv_CMDS_buffer(CommsStatus *status, Timer t, const int step)
 * Get CMDS and send MEAS functions
 ************************************************************/
 
-static double get_cmds(const char * const name, const long int ctrl)
+static double get_cmds(const char * const name, const int32_t ctrl)
 {
 	if(NULL == name) {
 		ERROR("get_cmds: NULL pointer argument.\n");
@@ -339,7 +339,7 @@ static double get_cmds(const char * const name, const long int ctrl)
 		ERROR("get_cmds: unkwon name \"%s\".\n", name);
 	}
 
-	long int tmp_control = 0;
+	int32_t tmp_control = 0;
 	if (CB_getControl(cmds_buffer, &tmp_control)) {
 		ERROR("get_cmds: unable to get CMDS contorl.\n");
 	}
@@ -355,13 +355,13 @@ static double get_cmds(const char * const name, const long int ctrl)
 /**
  * @prec: must be called once per MEAS name, per time slot.
  */
-static void send_meas(const char * const name, const double value, const long int ctrl)
+static void send_meas(const char * const name, const double value, const int32_t ctrl)
 {
 	if (NULL == name) {
 		ERROR("send_meas: NULL pointer argument.\n");
 	}
 
-	long int current_meas_control = 0, zero_ctrl = 0;
+	int32_t current_meas_control = 0, zero_ctrl = 0;
 	Measures index;
 
 	/* If the current ctrl differs from the control on the MEAS buffer,
@@ -418,11 +418,21 @@ static int server_is_running(void)
 
 static void print_MEAS_buffer(void)
 {
+	int32_t control = 0;
+	if(CB_getControl(meas_buffer, &control)) {
+		ERROR("print_MEAS_buffer: unable to get MEAS control.\n");
+	}
+	DEBUG_PRINT("MEAS buffer control is set to %d.\n", control);
 	GB_print(CB_getBuffer(meas_buffer), (PrintFunction) get_MEAS_name_from_num);
 }
 
 static void print_CMDS_buffer(void)
 {
+	int32_t control = 0;
+	if(CB_getControl(meas_buffer, &control)) {
+		ERROR("print_CMDS_buffer: unable to get CMDS control.\n");
+	}
+	DEBUG_PRINT("CMDS buffer control is set to %d.\n", control);
 	GB_print(CB_getBuffer(cmds_buffer), (PrintFunction) get_CMDS_name_from_num);
 }
 

@@ -12,7 +12,7 @@ int main(void)
 
 	CB_print(my_control_buffer);
 
-	long int i = 12;
+	int32_t i = 12;
 
 	CB_setControl(my_control_buffer, &i);
 

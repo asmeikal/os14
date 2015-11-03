@@ -32,7 +32,7 @@ enum _GB_type {
 ************************************************************/
 
 union _GB_value {
-	long int int_value;
+	int32_t int_value;
 	double double_value;
 };
 
@@ -153,7 +153,7 @@ int GB_getValue(GBuffer b, const int i, const void *ret)
 			*((double *) ret) = b->head[i].value.double_value;
 			break;
 		case _GB_LONG_INT:
-			*((long int *) ret) = b->head[i].value.int_value;
+			*((int32_t *) ret) = b->head[i].value.int_value;
 			break;
 		default:
 			DEBUG_PRINT("GB_getValue: buffer type not recognized, this should not have happened.\n");
@@ -164,11 +164,11 @@ int GB_getValue(GBuffer b, const int i, const void *ret)
 }
 
 ///**
-// * Gets the long int value at index [i]. Throws an error if
-// * the value is not set, the buffer is not a long int buffer,
+// * Gets the int32_t value at index [i]. Throws an error if
+// * the value is not set, the buffer is not a int32_t buffer,
 // * or the index is out of range.
 // */
-//long int GB_getLongIntValue(GBuffer b, const int i)
+//int32_t GB_getLongIntValue(GBuffer b, const int i)
 //{
 //	if(NULL == b) {
 //		DEBUG_PRINT("GB_getLongIntValue: NULL pointer argument.\n");
@@ -218,9 +218,9 @@ int GB_setValue(GBuffer b, const int i, const void * const  val)
 			break;
 		case _GB_LONG_INT:
 			if(_GB_STATUS_EMPTY != b->head[i].status) {
-				DEBUG_PRINT("GB_setValue: buffer[%d] was already set to %ld.\n", i, b->head[i].value.int_value);
+				DEBUG_PRINT("GB_setValue: buffer[%d] was already set to %d.\n", i, b->head[i].value.int_value);
 			}
-			b->head[i].value.int_value = *(long int *) val;
+			b->head[i].value.int_value = *(int32_t *) val;
 			break;
 		default:
 			DEBUG_PRINT("GB_setValue: buffer type not recognized, this should not have happened.\n");
@@ -232,11 +232,11 @@ int GB_setValue(GBuffer b, const int i, const void * const  val)
 }
 
 /**
- * Sets the long int value at index [i] to [v]. Throws an error if
- * the buffer is not a long int buffer or the index is out of range.
+ * Sets the int32_t value at index [i] to [v]. Throws an error if
+ * the buffer is not a int32_t buffer or the index is out of range.
  * Gives a warning if the index was not empty.
  */
-//void GB_setLongIntValue(GBuffer b, const int i, const long int v)
+//void GB_setLongIntValue(GBuffer b, const int i, const int32_t v)
 //{
 //	if(NULL == b) {
 //		DEBUG_PRINT("GB_setLongIntValue: NULL pointer argument.\n");
@@ -251,7 +251,7 @@ int GB_setValue(GBuffer b, const int i, const void * const  val)
 //	}
 //
 //	if(_GB_STATUS_EMPTY != b->head[i].status) {
-//		WARNING("GB_setLongIntValue: buffer[%d] was already set to %ld.\n", i, b->head[i].value.int_value);
+//		WARNING("GB_setLongIntValue: buffer[%d] was already set to %d.\n", i, b->head[i].value.int_value);
 //	}
 //
 //	b->head[i].value.int_value = v;
@@ -505,7 +505,7 @@ int GB_print(GBuffer b, PrintFunction f)
 					DEBUG_PRINT("[%s]: %.8e", f(i), b->head[i].value.double_value);
 					break;
 				case _GB_LONG_INT:
-					DEBUG_PRINT("[%s]: %ld", f(i), b->head[i].value.int_value);
+					DEBUG_PRINT("[%s]: %d", f(i), b->head[i].value.int_value);
 					break;
 				default:
 					DEBUG_PRINT("GB_print: buffer type not recognized, this should not have happened.\n");
