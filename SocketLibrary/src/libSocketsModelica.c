@@ -335,7 +335,7 @@ static double get_cmds(const char * const name, const int32_t ctrl)
 	double ret = 0.0;
 	Commands index = get_CMDS_num_from_name(name);
 
-	if((-1 == index) || (index >= CMDS_NUMBER)) {
+	if((CMDS_NUMBER <= index)) {
 		ERROR("get_cmds: unkwon name \"%s\".\n", name);
 	}
 
@@ -380,7 +380,7 @@ static void send_meas(const char * const name, const double value, const int32_t
 
 	/* Set value in MEAS buffer. */
 	index = get_MEAS_num_from_name(name);
-	if ((-1 == index) || (index >= MEAS_NUMBER)) {
+	if ((MEAS_NUMBER <= index)) {
 		ERROR("send_meas: unkwon name \"%s\".\n", name);
 	}
 	if (GB_isSet(CB_getBuffer(meas_buffer), index)) {

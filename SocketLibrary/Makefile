@@ -50,7 +50,7 @@ ifeq ($(UNAME), Linux)
 STD = --std=gnu99
 endif
 
-CC = gcc
+CC = clang
 CFLAGS_PROD = -DNDEBUG
 CFLAGS = $(STD) --pedantic --pedantic-errors -Werror -Wall -Wno-unused $(INCLUDE)
 
@@ -63,11 +63,11 @@ CFLAGS = $(STD) --pedantic --pedantic-errors -Werror -Wall -Wno-unused $(INCLUDE
 # object files
 $(OBJ_LIBS): $(HEADERS)
 	test -d $(OBJ_DIR) || mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) $(SRC_DIR)/$(@F:.o=.c) -c -o $@ -lm
+	$(CC) $(CFLAGS) $(SRC_DIR)/$(@F:.o=.c) -c -o $@ 
 
 $(TEST_OBJS): $(HEADERS)
 	test -d $(TEST_DIR_OBJ) || mkdir -p $(TEST_DIR_OBJ)
-	$(CC) $(CFLAGS) $(TEST_DIR_SRC)/$(@F:.o=.c) -c -o $@ -lm
+	$(CC) $(CFLAGS) $(TEST_DIR_SRC)/$(@F:.o=.c) -c -o $@ 
 
 # library
 $(LIB): $(OBJ_LIBS)

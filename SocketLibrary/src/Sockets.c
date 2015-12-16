@@ -110,7 +110,8 @@ void recv_complete(struct socket_singleton *socket, char *buf, const size_t coun
 		ERROR("recv_complete: can't read %zd bytes\n", count);
 	}
 
-	size_t n = 0, r;
+	size_t n = 0;
+	ssize_t r;
 
 	while(n < count) {
 
@@ -120,8 +121,8 @@ void recv_complete(struct socket_singleton *socket, char *buf, const size_t coun
 		}
 		else if(0 == r) {
 			WARNING("recv_complete: socket %d closed\n", socket->accept_fd);
-		socket->accept_fd = 0;
-		socket->started = 0;
+			socket->accept_fd = 0;
+			socket->started = 0;
 		}
 		n += r;
 	}
@@ -143,8 +144,8 @@ void send_complete(struct socket_singleton *socket, const char * const buf, size
 		}
 		else if(0 == s) {
 			WARNING("send_complete: socket %d closed\n", socket->accept_fd);
-		socket->accept_fd = 0;
-		socket->started = 0;
+			socket->accept_fd = 0;
+			socket->started = 0;
 		}
 		n += s;
 	}

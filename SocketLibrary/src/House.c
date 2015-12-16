@@ -13,7 +13,8 @@
 Measures get_MEAS_num_from_name(const char * const name)
 {
 	if(NULL == name) {
-		ERROR("get_MEAS_num_from_name: NULL pointer argument\n");
+		WARNING("get_MEAS_num_from_name: NULL pointer argument\n");
+		return MEAS_NUMBER;
 	}
 
 	if((strlen(name) == strlen("energy")) &&
@@ -41,14 +42,15 @@ Measures get_MEAS_num_from_name(const char * const name)
 		return MEAS_PHEV_READY_HOURS;
 	}
 	else {
-		return -1;
+		return MEAS_NUMBER;
 	}
 }
 
 Commands get_CMDS_num_from_name(const char * const name)
 {
 	if(NULL == name) {
-		ERROR("get_CMDS_num_from_name: NULL pointer argument\n");
+		WARNING("get_CMDS_num_from_name: NULL pointer argument\n");
+		return CMDS_NUMBER;
 	}
 
 	if((strlen(name) == strlen("battery")) &&
@@ -60,7 +62,7 @@ Commands get_CMDS_num_from_name(const char * const name)
 		return CMDS_PHEV;
 	}
 	else {
-		return -1;
+		return CMDS_NUMBER;
 	}
 }
 
@@ -81,7 +83,8 @@ const char * const get_MEAS_name_from_num(const Measures c)
 		case MEAS_PHEV_READY_HOURS:
 			return "PHEV ready hours";
 		default:
-			ERROR("get_MEAS_name_from_num: measurement type not recognized\n");
+			WARNING("get_MEAS_name_from_num: measurement type not recognized\n");
+			return "(UNKNOWN)";
 	}
 }
 
@@ -93,7 +96,8 @@ const char * const get_CMDS_name_from_num(const Commands c)
 		case CMDS_PHEV:
 			return "PHEV charge rate";
 		default:
-			ERROR("get_MEAS_name_from_num: measurement type not recognized\n");
+			WARNING("get_MEAS_name_from_num: measurement type not recognized\n");
+			return "(UNKNOWN)";
 	}
 }
 
