@@ -1,5 +1,7 @@
 model HouseLUT
+  Real energyConsumption(unit = "kW");
   HouseData HouseSim;
+  Battery mainBattery(capacity = 4, minChargeRate = -2, maxChargeRate = 2, startingCharge = 2, chargeDissipation = 0.98, dischargeDissipation = 0.82);
   PHEV myCar(capacity = 16, maxChargeRate = 13, chargeDissipation = 0.876, dischargeDissipation = 0.0, startingCharge = 0);
 
   class Battery
@@ -27,7 +29,7 @@ model HouseLUT
     parameter Real dischargeDissipation;
     parameter Real capacity(unit = "kWh");
     Real chargeRate(unit = "kW", min = minChargeRate, max = maxChargeRate);
-    Real charge(unit = "kWh", start = startingCharge);
+    Real charge(unit = "kWh", start = startingCharge, max = capacity * 1.01);
     Real chargeRate_toGrid(unit = "kWh");
     Real chargeRate_toLoad(unit = "kWh");
     Boolean present(start = false);
@@ -62,13 +64,13 @@ equation
   myCar.present = not HouseSim.PHEV_next_hours == 0;
   myCar.not_present = HouseSim.PHEV_next_hours == 0;
   myCar.chargeRate = HouseSim.PHEV_chargeRate;
-  when {myCar.not_present} then
-    reinit(myCar.chargeRate, 0);
+  mainBattery.chargeRate = 0;
+  when myCar.not_present then
     reinit(myCar.charge, 0);
   end when;
-  when {myCar.present} then
+  when myCar.present then
     reinit(myCar.charge, HouseSim.PHEV_charge);
   end when;
-  annotation(experiment(StartTime = 0, StopTime = 128100, Tolerance = 1e-06, Interval = 1));
+  energyConsumption = HouseSim.consumption - HouseSim.production + mainBattery.chargeRate_toGrid + myCar.chargeRate_toGrid;
+  annotation(experiment(StartTime = 0, StopTime = 12810, Tolerance = 1e-06, Interval = 1));
 end HouseLUT;
-

@@ -93,7 +93,7 @@ protected
   parameter Real comms_time_int = 60.0;
   /* The simulation sends data to and asks data from the server every [queries_per_int] units of the [time] var. */
   parameter Integer queries_per_int = 60;
-  parameter Integer speed = 1;
+  parameter Integer speed = 3600;
   parameter Real step_time = comms_time_int / queries_per_int;
   Integer control(start = 0);
 initial algorithm
